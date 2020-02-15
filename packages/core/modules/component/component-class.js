@@ -64,6 +64,7 @@ class Component {
       enumerable: true,
       configurable: true,
       get() {
+        if (app.rootComponent) return app.rootComponent;
         let root = Utils.merge({}, app.data, app.methods);
         if (window && window.Proxy) {
           root = new window.Proxy(root, {
@@ -275,12 +276,14 @@ class Component {
     }
     self.__requestAnimationFrameId = window.requestAnimationFrame(() => {
       if (self.__updateIsPending) update();
-      self.__updateQueue.forEach(resolver => resolver());
+      let resolvers = [...self.__updateQueue];
       self.__updateQueue = [];
       self.__updateIsPending = false;
       window.cancelAnimationFrame(self.__requestAnimationFrameId);
       delete self.__requestAnimationFrameId;
       delete self.__updateIsPending;
+      resolvers.forEach(resolver => resolver());
+      resolvers = [];
     });
   }
 
@@ -300,8 +303,8 @@ class Component {
     const self = this;
     return new Promise((resolve) => {
       function resolver() {
-        if (callback) callback();
         resolve();
+        if (callback) callback();
       }
       self.__updateIsPending = true;
       self.__updateQueue.push(resolver);
@@ -309,10 +312,20 @@ class Component {
     });
   }
 
-  $setState(mergeState, callback) {
+  $setState(mergeState = {}, callback) {
     const self = this;
     Utils.merge(self, mergeState);
     return self.$update(callback);
+  }
+
+  $f7ready(callback) {
+    if (this.$f7.initialized) {
+      callback(this.$f7);
+      return;
+    }
+    this.$f7.once('init', () => {
+      callback(this.$f7);
+    });
   }
 
   $mount(mountMethod) {

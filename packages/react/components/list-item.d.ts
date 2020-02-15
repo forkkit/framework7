@@ -15,6 +15,7 @@ declare namespace F7ListItem {
     header? : string | number
     footer? : string | number
     tooltip? : string
+    tooltipTrigger? : string
     link? : boolean | string
     target? : string
     after? : string | number
@@ -27,6 +28,7 @@ declare namespace F7ListItem {
     swipeout? : boolean
     swipeoutOpened? : boolean
     sortable? : boolean
+    sortableOpposite? : boolean
     accordionItem? : boolean
     accordionItemOpened? : boolean
     smartSelect? : boolean

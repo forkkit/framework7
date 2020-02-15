@@ -41,6 +41,17 @@ class Tooltip extends Framework7Class {
 
     const touchesStart = {};
     let isTouched;
+    function handleClick() {
+      if (tooltip.opened) tooltip.hide();
+      else tooltip.show(this);
+    }
+    function handleClickOut(e) {
+      if (tooltip.opened && (
+        $(e.target).closest($targetEl).length
+        || $(e.target).closest(tooltip.$el).length
+      )) return;
+      tooltip.hide();
+    }
     function handleTouchStart(e) {
       if (isTouched) return;
       isTouched = true;
@@ -80,6 +91,11 @@ class Tooltip extends Framework7Class {
 
     tooltip.attachEvents = function attachEvents() {
       $el.on('transitionend', handleTransitionEnd);
+      if (tooltip.params.trigger === 'click') {
+        $targetEl.on('click', handleClick);
+        $('html').on('click', handleClickOut);
+        return;
+      }
       if (Support.touch) {
         const passive = Support.passiveListener ? { passive: true } : false;
         $targetEl.on(app.touchEvents.start, handleTouchStart, passive);
@@ -92,6 +108,11 @@ class Tooltip extends Framework7Class {
     };
     tooltip.detachEvents = function detachEvents() {
       $el.off('transitionend', handleTransitionEnd);
+      if (tooltip.params.trigger === 'click') {
+        $targetEl.off('click', handleClick);
+        $('html').off('click', handleClickOut);
+        return;
+      }
       if (Support.touch) {
         const passive = Support.passiveListener ? { passive: true } : false;
         $targetEl.off(app.touchEvents.start, handleTouchStart, passive);
@@ -114,6 +135,7 @@ class Tooltip extends Framework7Class {
   position(targetEl) {
     const tooltip = this;
     const { $el, app } = tooltip;
+    const tooltipOffset = tooltip.params.offset || 0;
     $el.css({ left: '', top: '' });
     const $targetEl = $(targetEl || tooltip.targetEl);
     const [width, height] = [$el.width(), $el.height()];
@@ -142,13 +164,13 @@ class Tooltip extends Framework7Class {
     // Top Position
     let position = 'top';
 
-    if (height < targetOffsetTop) {
+    if (height + tooltipOffset < targetOffsetTop) {
       // On top
-      top = targetOffsetTop - height;
+      top = targetOffsetTop - height - tooltipOffset;
     } else if (height < app.height - targetOffsetTop - targetHeight) {
       // On bottom
       position = 'bottom';
-      top = targetOffsetTop + targetHeight;
+      top = targetOffsetTop + targetHeight + tooltipOffset;
     } else {
       // On middle
       position = 'middle';

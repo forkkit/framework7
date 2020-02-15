@@ -6,10 +6,10 @@
 const path = require('path');
 const rollup = require('rollup');
 const buble = require('rollup-plugin-buble');
-const replace = require('rollup-plugin-replace');
-const resolve = require('rollup-plugin-node-resolve');
+const replace = require('@rollup/plugin-replace');
+const resolve = require('@rollup/plugin-node-resolve');
 const Terser = require('terser');
-const commonjs = require('rollup-plugin-commonjs');
+const commonjs = require('@rollup/plugin-commonjs');
 const getConfig = require('./get-core-config.js');
 const banner = require('./banners/core.js');
 const getOutput = require('./get-output.js');
@@ -103,7 +103,9 @@ async function umdBundle({ components, lite } = {}) {
       }),
       resolve({ mainFields: ['module', 'main', 'jsnext'] }),
       commonjs(),
-      buble(),
+      buble({
+        objectAssign: 'Object.assign',
+      }),
     ],
     onwarn(warning, warn) {
       const ignore = ['EVAL'];
@@ -168,7 +170,9 @@ async function umdCore({ lite } = {}) {
       }),
       resolve({ mainFields: ['module', 'main', 'jsnext'] }),
       commonjs(),
-      buble(),
+      buble({
+        objectAssign: 'Object.assign',
+      }),
     ],
     onwarn(warning, warn) {
       const ignore = ['EVAL'];

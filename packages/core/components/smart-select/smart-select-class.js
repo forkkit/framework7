@@ -42,9 +42,6 @@ class SmartSelect extends Framework7Class {
       }
     }
 
-    // View
-    let view;
-
     // Url
     let url = params.url;
     if (!url) {
@@ -68,7 +65,6 @@ class SmartSelect extends Framework7Class {
       multiple,
       inputType,
       id,
-      view,
       inputName: `${inputType}-${id}`,
       selectName: $selectEl.attr('name'),
       maxLength: $selectEl.attr('maxlength') || params.maxLength,
@@ -213,16 +209,18 @@ class SmartSelect extends Framework7Class {
     return ss.$selectEl.val();
   }
 
-  getView() {
-    const ss = this;
-    let view = ss.view || ss.params.view;
-    if (!view) {
-      view = ss.$el.parents('.view').length && ss.$el.parents('.view')[0].f7View;
+  get view() {
+    const { params, $el } = this;
+    let view;
+    if (params.view) {
+      view = params.view;
     }
     if (!view) {
+      view = $el.parents('.view').length && $el.parents('.view')[0].f7View;
+    }
+    if (!view && params.openIn === 'page') {
       throw Error('Smart Select requires initialized View');
     }
-    ss.view = view;
     return view;
   }
 
@@ -378,7 +376,7 @@ class SmartSelect extends Framework7Class {
               </div>
             ` : ''}
             <div class="item-inner">
-              <div class="item-title${item.color ? ` color-${item.color}` : ''}">${item.text}</div>
+              <div class="item-title${item.color ? ` text-color-${item.color}` : ''}">${item.text}</div>
             </div>
           </label>
         </li>
@@ -525,6 +523,7 @@ class SmartSelect extends Framework7Class {
       }
     } else {
       const $selectedItemEl = $containerEl.find('input:checked').parents('li');
+      if (!$selectedItemEl.length) return ss;
       const $pageContentEl = $containerEl.find('.page-content');
       $pageContentEl.scrollTop($selectedItemEl.offset().top - $pageContentEl.offset().top - parseInt($pageContentEl.css('padding-top'), 10));
     }
@@ -655,9 +654,8 @@ class SmartSelect extends Framework7Class {
     if (ss.opened) return ss;
     ss.getItemsData();
     const pageHtml = ss.renderPage(ss.items);
-    const view = ss.getView();
 
-    view.router.navigate({
+    ss.view.router.navigate({
       url: ss.url,
       route: {
         content: pageHtml,
@@ -707,9 +705,8 @@ class SmartSelect extends Framework7Class {
       },
     };
 
-    if (ss.params.routableModals) {
-      const view = ss.getView();
-      view.router.navigate({
+    if (ss.params.routableModals && ss.view) {
+      ss.view.router.navigate({
         url: ss.url,
         route: {
           path: ss.url,
@@ -751,9 +748,8 @@ class SmartSelect extends Framework7Class {
       },
     };
 
-    if (ss.params.routableModals) {
-      const view = ss.getView();
-      view.router.navigate({
+    if (ss.params.routableModals && ss.view) {
+      ss.view.router.navigate({
         url: ss.url,
         route: {
           path: ss.url,
@@ -789,9 +785,8 @@ class SmartSelect extends Framework7Class {
         },
       },
     };
-    if (ss.params.routableModals) {
-      const view = ss.getView();
-      view.router.navigate({
+    if (ss.params.routableModals && ss.view) {
+      ss.view.router.navigate({
         url: ss.url,
         route: {
           path: ss.url,
@@ -827,9 +822,8 @@ class SmartSelect extends Framework7Class {
   close() {
     const ss = this;
     if (!ss.opened) return ss;
-    if (ss.params.routableModals || ss.openedIn === 'page') {
-      const view = ss.getView();
-      view.router.back();
+    if ((ss.params.routableModals && ss.view) || ss.openedIn === 'page') {
+      ss.view.router.back();
     } else {
       ss.modal.once('modalClosed', () => {
         Utils.nextTick(() => {

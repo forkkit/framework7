@@ -1,20 +1,20 @@
 /**
- * Framework7 5.1.1
+ * Framework7 5.4.1
  * Full featured mobile HTML framework for building iOS & Android apps
- * http://framework7.io/
+ * https://framework7.io/
  *
- * Copyright 2014-2019 Vladimir Kharlampidi
+ * Copyright 2014-2020 Vladimir Kharlampidi
  *
  * Released under the MIT License
  *
- * Released on: November 3, 2019
+ * Released on: February 8, 2020
  */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
   (global = global || self, global.Framework7 = factory());
-}(this, function () { 'use strict';
+}(this, (function () { 'use strict';
 
   /**
    * Template7 1.4.2
@@ -2774,7 +2774,7 @@
         return !!((win.navigator.maxTouchPoints > 0) || ('ontouchstart' in win) || (win.DocumentTouch && doc instanceof win.DocumentTouch));
       }()),
 
-      pointerEvents: !!win.PointerEvent && ('maxTouchPoints' in win.navigator) && win.navigator.maxTouchPoints > 0,
+      pointerEvents: !!win.PointerEvent,
 
       observer: (function checkObserver() {
         return ('MutationObserver' in win || 'WebkitMutationObserver' in win);
@@ -2959,11 +2959,11 @@
         var args = [], len = arguments.length;
         while ( len-- ) args[ len ] = arguments[ len ];
 
-      handler.apply(self, args);
       self.off(events, onceHandler);
       if (onceHandler.f7proxy) {
         delete onceHandler.f7proxy;
       }
+      handler.apply(self, args);
     }
     onceHandler.f7proxy = handler;
     return self.on(events, onceHandler, priority);
@@ -3246,6 +3246,7 @@
       {
         open: function open(el, animate) {
           var $el = $(el);
+          if (!$el.length) { return undefined; }
           var instance = $el[0].f7Modal;
           if (!instance) { instance = new constructor(app, { el: $el }); }
           return instance.open(animate);
@@ -3254,7 +3255,7 @@
           if ( el === void 0 ) el = defaultSelector;
 
           var $el = $(el);
-          if ($el.length === 0) { return undefined; }
+          if (!$el.length) { return undefined; }
           var instance = $el[0].f7Modal;
           if (!instance) { instance = new constructor(app, { el: $el }); }
           return instance.close(animate);
@@ -3349,12 +3350,12 @@
               var id = Utils.id();
               var callbackLoadName = "f7_component_loader_callback_" + id;
 
-              var scriptEl = document.createElement('script');
+              var scriptEl = doc.createElement('script');
               scriptEl.innerHTML = "window." + callbackLoadName + " = function (Framework7, Framework7AutoInstallComponent) {return " + (scriptContent.trim()) + "}";
               $('head').append(scriptEl);
 
-              var componentLoader = window[callbackLoadName];
-              delete window[callbackLoadName];
+              var componentLoader = win[callbackLoadName];
+              delete win[callbackLoadName];
               $(scriptEl).remove();
 
               var module = componentLoader(Framework7, false);
@@ -3384,7 +3385,7 @@
           Framework7.request.get(
             modulePath.replace('.js', app.rtl ? '.rtl.css' : '.css'),
             function (styleContent) {
-              var styleEl = document.createElement('style');
+              var styleEl = doc.createElement('style');
               styleEl.innerHTML = styleContent;
               $('head').append(styleEl);
 
@@ -3434,6 +3435,8 @@
         autoDarkTheme: false,
         iosTranslucentBars: true,
         iosTranslucentModals: true,
+        component: undefined,
+        componentUrl: undefined,
       };
 
       // Extend defaults with modules params
@@ -3506,6 +3509,7 @@
           html.classList.remove('theme-dark');
         }
       };
+
       // Init
       if (app.params.init) {
         if (Device.cordova && app.params.initOnDeviceReady) {
@@ -3516,6 +3520,7 @@
           app.init();
         }
       }
+
       // Return app instance
       return app;
     }
@@ -3572,7 +3577,24 @@
       if (app.mq.light) { app.mq.light.removeListener(app.colorSchemeListener); }
     };
 
-    Framework7.prototype.init = function init () {
+    Framework7.prototype.initAppComponent = function initAppComponent (callback) {
+      var app = this;
+      app.router.componentLoader(
+        app.params.component,
+        app.params.componentUrl,
+        { componentOptions: { el: app.root[0] } },
+        function (el) {
+          app.root = $(el);
+          app.root[0].f7 = app;
+          app.rootComponent = el.f7Component;
+          if (callback) { callback(); }
+        },
+        function () {}
+      );
+    };
+
+    // eslint-disable-next-line
+    Framework7.prototype._init = function _init () {
       var app = this;
       if (app.initialized) { return app; }
 
@@ -3623,6 +3645,17 @@
       app.emit('init');
 
       return app;
+    };
+
+    Framework7.prototype.init = function init () {
+      var app = this;
+      if (app.params.component || app.params.componentUrl) {
+        app.initAppComponent(function () {
+          app._init(); // eslint-disable-line
+        });
+      } else {
+        app._init(); // eslint-disable-line
+      }
     };
 
     // eslint-disable-next-line
@@ -4000,6 +4033,7 @@
     // Additional headers
     if (options.headers) {
       Object.keys(options.headers).forEach(function (headerName) {
+        if (typeof options.headers[headerName] === 'undefined') { return; }
         xhr.setRequestHeader(headerName, options.headers[headerName]);
       });
     }
@@ -4397,7 +4431,9 @@
       }
     }
     function handleMouseMove() {
-      $('.active-state').removeClass('active-state');
+      if (!params.activeStateOnMouseMove) {
+        $('.active-state').removeClass('active-state');
+      }
       if (useRipple) {
         rippleTouchMove();
       }
@@ -4588,16 +4624,18 @@
 
 
     var passiveListener = Support.passiveListener ? { passive: true } : false;
+    var passiveListenerCapture = Support.passiveListener ? { passive: true, capture: true } : true;
     var activeListener = Support.passiveListener ? { passive: false } : false;
+    var activeListenerCapture = Support.passiveListener ? { passive: false, capture: true } : true;
 
     doc.addEventListener('click', appClick, true);
 
     if (Support.passiveListener) {
-      doc.addEventListener(app.touchEvents.start, appTouchStartActive, activeListener);
+      doc.addEventListener(app.touchEvents.start, appTouchStartActive, activeListenerCapture);
       doc.addEventListener(app.touchEvents.move, appTouchMoveActive, activeListener);
       doc.addEventListener(app.touchEvents.end, appTouchEndActive, activeListener);
 
-      doc.addEventListener(app.touchEvents.start, appTouchStartPassive, passiveListener);
+      doc.addEventListener(app.touchEvents.start, appTouchStartPassive, passiveListenerCapture);
       doc.addEventListener(app.touchEvents.move, appTouchMovePassive, passiveListener);
       doc.addEventListener(app.touchEvents.end, appTouchEndPassive, passiveListener);
       if (Support.touch && Support.gestures) {
@@ -4613,7 +4651,7 @@
       doc.addEventListener(app.touchEvents.start, function (e) {
         appTouchStartActive(e);
         appTouchStartPassive(e);
-      }, false);
+      }, true);
       doc.addEventListener(app.touchEvents.move, function (e) {
         appTouchMoveActive(e);
         appTouchMovePassive(e);
@@ -4648,6 +4686,7 @@
       app.on('touchstart', handleMouseDown);
       app.on('touchmove', handleMouseMove);
       app.on('touchend', handleMouseUp);
+      doc.addEventListener('pointercancel', handleMouseUp, { passive: true });
     }
     doc.addEventListener('contextmenu', function (e) {
       if (params.disableContextMenu && (Device.ios || Device.android || Device.cordova)) {
@@ -4674,11 +4713,12 @@
         tapHoldPreventClicks: true,
         // Active State
         activeState: true,
-        activeStateElements: 'a, button, label, span, .actions-button, .stepper-button, .stepper-button-plus, .stepper-button-minus, .card-expandable, .menu-item, .link, .item-link',
+        activeStateElements: 'a, button, label, span, .actions-button, .stepper-button, .stepper-button-plus, .stepper-button-minus, .card-expandable, .menu-item, .link, .item-link, .accordion-item-toggle',
+        activeStateOnMouseMove: false,
         mdTouchRipple: true,
         iosTouchRipple: false,
         auroraTouchRipple: false,
-        touchRippleElements: '.ripple, .link, .item-link, .list-button, .links-list a, .button, button, .input-clear-button, .dialog-button, .tab-link, .item-radio, .item-checkbox, .actions-button, .searchbar-disable-button, .fab a, .checkbox, .radio, .data-table .sortable-cell:not(.input-cell), .notification-close-button, .stepper-button, .stepper-button-minus, .stepper-button-plus, .menu-item-content',
+        touchRippleElements: '.ripple, .link, .item-link, .list-button, .links-list a, .button, button, .input-clear-button, .dialog-button, .tab-link, .item-radio, .item-checkbox, .actions-button, .searchbar-disable-button, .fab a, .checkbox, .radio, .data-table .sortable-cell:not(.input-cell), .notification-close-button, .stepper-button, .stepper-button-minus, .stepper-button-plus, .menu-item-content, .list.accordion-list .accordion-item-toggle',
       },
     },
     instance: {
@@ -4694,377 +4734,361 @@
   };
 
   /**
-   * Expose `pathToRegexp`.
+   * Tokenize input string.
    */
-  var pathToRegexp_1 = pathToRegexp;
-  var parse_1 = parse;
-  var compile_1 = compile;
-  var tokensToFunction_1 = tokensToFunction;
-  var tokensToRegExp_1 = tokensToRegExp;
-
-  /**
-   * Default configs.
-   */
-  var DEFAULT_DELIMITER = '/';
-
-  /**
-   * The main path matching regexp utility.
-   *
-   * @type {RegExp}
-   */
-  var PATH_REGEXP = new RegExp([
-    // Match escaped characters that would otherwise appear in future matches.
-    // This allows the user to escape special characters that won't transform.
-    '(\\\\.)',
-    // Match Express-style parameters and un-named parameters with a prefix
-    // and optional suffixes. Matches appear as:
-    //
-    // ":test(\\d+)?" => ["test", "\d+", undefined, "?"]
-    // "(\\d+)"  => [undefined, undefined, "\d+", undefined]
-    '(?:\\:(\\w+)(?:\\(((?:\\\\.|[^\\\\()])+)\\))?|\\(((?:\\\\.|[^\\\\()])+)\\))([+*?])?'
-  ].join('|'), 'g');
-
+  function lexer(str) {
+      var tokens = [];
+      var i = 0;
+      while (i < str.length) {
+          var char = str[i];
+          if (char === "*" || char === "+" || char === "?") {
+              tokens.push({ type: "MODIFIER", index: i, value: str[i++] });
+              continue;
+          }
+          if (char === "\\") {
+              tokens.push({ type: "ESCAPED_CHAR", index: i++, value: str[i++] });
+              continue;
+          }
+          if (char === "{") {
+              tokens.push({ type: "OPEN", index: i, value: str[i++] });
+              continue;
+          }
+          if (char === "}") {
+              tokens.push({ type: "CLOSE", index: i, value: str[i++] });
+              continue;
+          }
+          if (char === ":") {
+              var name = "";
+              var j = i + 1;
+              while (j < str.length) {
+                  var code = str.charCodeAt(j);
+                  if (
+                  // `0-9`
+                  (code >= 48 && code <= 57) ||
+                      // `A-Z`
+                      (code >= 65 && code <= 90) ||
+                      // `a-z`
+                      (code >= 97 && code <= 122) ||
+                      // `_`
+                      code === 95) {
+                      name += str[j++];
+                      continue;
+                  }
+                  break;
+              }
+              if (!name)
+                  { throw new TypeError("Missing parameter name at " + i); }
+              tokens.push({ type: "NAME", index: i, value: name });
+              i = j;
+              continue;
+          }
+          if (char === "(") {
+              var count = 1;
+              var pattern = "";
+              var j = i + 1;
+              if (str[j] === "?") {
+                  throw new TypeError("Pattern cannot start with \"?\" at " + j);
+              }
+              while (j < str.length) {
+                  if (str[j] === "\\") {
+                      pattern += str[j++] + str[j++];
+                      continue;
+                  }
+                  if (str[j] === ")") {
+                      count--;
+                      if (count === 0) {
+                          j++;
+                          break;
+                      }
+                  }
+                  else if (str[j] === "(") {
+                      count++;
+                      if (str[j + 1] !== "?") {
+                          throw new TypeError("Capturing groups are not allowed at " + j);
+                      }
+                  }
+                  pattern += str[j++];
+              }
+              if (count)
+                  { throw new TypeError("Unbalanced pattern at " + i); }
+              if (!pattern)
+                  { throw new TypeError("Missing pattern at " + i); }
+              tokens.push({ type: "PATTERN", index: i, value: pattern });
+              i = j;
+              continue;
+          }
+          tokens.push({ type: "CHAR", index: i, value: str[i++] });
+      }
+      tokens.push({ type: "END", index: i, value: "" });
+      return tokens;
+  }
   /**
    * Parse a string for the raw tokens.
-   *
-   * @param  {string}  str
-   * @param  {Object=} options
-   * @return {!Array}
    */
-  function parse (str, options) {
-    var tokens = [];
-    var key = 0;
-    var index = 0;
-    var path = '';
-    var defaultDelimiter = (options && options.delimiter) || DEFAULT_DELIMITER;
-    var whitelist = (options && options.whitelist) || undefined;
-    var pathEscaped = false;
-    var res;
-
-    while ((res = PATH_REGEXP.exec(str)) !== null) {
-      var m = res[0];
-      var escaped = res[1];
-      var offset = res.index;
-      path += str.slice(index, offset);
-      index = offset + m.length;
-
-      // Ignore already escaped sequences.
-      if (escaped) {
-        path += escaped[1];
-        pathEscaped = true;
-        continue
+  function parse(str, options) {
+      if (options === void 0) { options = {}; }
+      var tokens = lexer(str);
+      var _a = options.prefixes, prefixes = _a === void 0 ? "./" : _a;
+      var defaultPattern = "[^" + escapeString(options.delimiter || "/#?") + "]+?";
+      var result = [];
+      var key = 0;
+      var i = 0;
+      var path = "";
+      var tryConsume = function (type) {
+          if (i < tokens.length && tokens[i].type === type)
+              { return tokens[i++].value; }
+      };
+      var mustConsume = function (type) {
+          var value = tryConsume(type);
+          if (value !== undefined)
+              { return value; }
+          var _a = tokens[i], nextType = _a.type, index = _a.index;
+          throw new TypeError("Unexpected " + nextType + " at " + index + ", expected " + type);
+      };
+      var consumeText = function () {
+          var result = "";
+          var value;
+          // tslint:disable-next-line
+          while ((value = tryConsume("CHAR") || tryConsume("ESCAPED_CHAR"))) {
+              result += value;
+          }
+          return result;
+      };
+      while (i < tokens.length) {
+          var char = tryConsume("CHAR");
+          var name = tryConsume("NAME");
+          var pattern = tryConsume("PATTERN");
+          if (name || pattern) {
+              var prefix = char || "";
+              if (prefixes.indexOf(prefix) === -1) {
+                  path += prefix;
+                  prefix = "";
+              }
+              if (path) {
+                  result.push(path);
+                  path = "";
+              }
+              result.push({
+                  name: name || key++,
+                  prefix: prefix,
+                  suffix: "",
+                  pattern: pattern || defaultPattern,
+                  modifier: tryConsume("MODIFIER") || ""
+              });
+              continue;
+          }
+          var value = char || tryConsume("ESCAPED_CHAR");
+          if (value) {
+              path += value;
+              continue;
+          }
+          if (path) {
+              result.push(path);
+              path = "";
+          }
+          var open = tryConsume("OPEN");
+          if (open) {
+              var prefix = consumeText();
+              var name_1 = tryConsume("NAME") || "";
+              var pattern_1 = tryConsume("PATTERN") || "";
+              var suffix = consumeText();
+              mustConsume("CLOSE");
+              result.push({
+                  name: name_1 || (pattern_1 ? key++ : ""),
+                  pattern: name_1 && !pattern_1 ? defaultPattern : pattern_1,
+                  prefix: prefix,
+                  suffix: suffix,
+                  modifier: tryConsume("MODIFIER") || ""
+              });
+              continue;
+          }
+          mustConsume("END");
       }
-
-      var prev = '';
-      var name = res[2];
-      var capture = res[3];
-      var group = res[4];
-      var modifier = res[5];
-
-      if (!pathEscaped && path.length) {
-        var k = path.length - 1;
-        var c = path[k];
-        var matches = whitelist ? whitelist.indexOf(c) > -1 : true;
-
-        if (matches) {
-          prev = c;
-          path = path.slice(0, k);
-        }
-      }
-
-      // Push the current path onto the tokens.
-      if (path) {
-        tokens.push(path);
-        path = '';
-        pathEscaped = false;
-      }
-
-      var repeat = modifier === '+' || modifier === '*';
-      var optional = modifier === '?' || modifier === '*';
-      var pattern = capture || group;
-      var delimiter = prev || defaultDelimiter;
-
-      tokens.push({
-        name: name || key++,
-        prefix: prev,
-        delimiter: delimiter,
-        optional: optional,
-        repeat: repeat,
-        pattern: pattern
-          ? escapeGroup(pattern)
-          : '[^' + escapeString(delimiter === defaultDelimiter ? delimiter : (delimiter + defaultDelimiter)) + ']+?'
-      });
-    }
-
-    // Push any remaining characters.
-    if (path || index < str.length) {
-      tokens.push(path + str.substr(index));
-    }
-
-    return tokens
+      return result;
   }
-
   /**
    * Compile a string to a template function for the path.
-   *
-   * @param  {string}             str
-   * @param  {Object=}            options
-   * @return {!function(Object=, Object=)}
    */
-  function compile (str, options) {
-    return tokensToFunction(parse(str, options), options)
+  function compile(str, options) {
+      return tokensToFunction(parse(str, options), options);
   }
-
   /**
    * Expose a method for transforming tokens into the path function.
    */
-  function tokensToFunction (tokens, options) {
-    // Compile all the tokens into regexps.
-    var matches = new Array(tokens.length);
-
-    // Compile all the patterns before compilation.
-    for (var i = 0; i < tokens.length; i++) {
-      if (typeof tokens[i] === 'object') {
-        matches[i] = new RegExp('^(?:' + tokens[i].pattern + ')$', flags(options));
-      }
-    }
-
-    return function (data, options) {
-      var path = '';
-      var encode = (options && options.encode) || encodeURIComponent;
-      var validate = options ? options.validate !== false : true;
-
-      for (var i = 0; i < tokens.length; i++) {
-        var token = tokens[i];
-
-        if (typeof token === 'string') {
-          path += token;
-          continue
-        }
-
-        var value = data ? data[token.name] : undefined;
-        var segment;
-
-        if (Array.isArray(value)) {
-          if (!token.repeat) {
-            throw new TypeError('Expected "' + token.name + '" to not repeat, but got array')
+  function tokensToFunction(tokens, options) {
+      if (options === void 0) { options = {}; }
+      var reFlags = flags(options);
+      var _a = options.encode, encode = _a === void 0 ? function (x) { return x; } : _a, _b = options.validate, validate = _b === void 0 ? true : _b;
+      // Compile all the tokens into regexps.
+      var matches = tokens.map(function (token) {
+          if (typeof token === "object") {
+              return new RegExp("^(?:" + token.pattern + ")$", reFlags);
           }
-
-          if (value.length === 0) {
-            if (token.optional) { continue }
-
-            throw new TypeError('Expected "' + token.name + '" to not be empty')
+      });
+      return function (data) {
+          var path = "";
+          for (var i = 0; i < tokens.length; i++) {
+              var token = tokens[i];
+              if (typeof token === "string") {
+                  path += token;
+                  continue;
+              }
+              var value = data ? data[token.name] : undefined;
+              var optional = token.modifier === "?" || token.modifier === "*";
+              var repeat = token.modifier === "*" || token.modifier === "+";
+              if (Array.isArray(value)) {
+                  if (!repeat) {
+                      throw new TypeError("Expected \"" + token.name + "\" to not repeat, but got an array");
+                  }
+                  if (value.length === 0) {
+                      if (optional)
+                          { continue; }
+                      throw new TypeError("Expected \"" + token.name + "\" to not be empty");
+                  }
+                  for (var j = 0; j < value.length; j++) {
+                      var segment = encode(value[j], token);
+                      if (validate && !matches[i].test(segment)) {
+                          throw new TypeError("Expected all \"" + token.name + "\" to match \"" + token.pattern + "\", but got \"" + segment + "\"");
+                      }
+                      path += token.prefix + segment + token.suffix;
+                  }
+                  continue;
+              }
+              if (typeof value === "string" || typeof value === "number") {
+                  var segment = encode(String(value), token);
+                  if (validate && !matches[i].test(segment)) {
+                      throw new TypeError("Expected \"" + token.name + "\" to match \"" + token.pattern + "\", but got \"" + segment + "\"");
+                  }
+                  path += token.prefix + segment + token.suffix;
+                  continue;
+              }
+              if (optional)
+                  { continue; }
+              var typeOfMessage = repeat ? "an array" : "a string";
+              throw new TypeError("Expected \"" + token.name + "\" to be " + typeOfMessage);
           }
-
-          for (var j = 0; j < value.length; j++) {
-            segment = encode(value[j], token);
-
-            if (validate && !matches[i].test(segment)) {
-              throw new TypeError('Expected all "' + token.name + '" to match "' + token.pattern + '"')
-            }
-
-            path += (j === 0 ? token.prefix : token.delimiter) + segment;
-          }
-
-          continue
-        }
-
-        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-          segment = encode(String(value), token);
-
-          if (validate && !matches[i].test(segment)) {
-            throw new TypeError('Expected "' + token.name + '" to match "' + token.pattern + '", but got "' + segment + '"')
-          }
-
-          path += token.prefix + segment;
-          continue
-        }
-
-        if (token.optional) { continue }
-
-        throw new TypeError('Expected "' + token.name + '" to be ' + (token.repeat ? 'an array' : 'a string'))
-      }
-
-      return path
-    }
+          return path;
+      };
   }
-
   /**
    * Escape a regular expression string.
-   *
-   * @param  {string} str
-   * @return {string}
    */
-  function escapeString (str) {
-    return str.replace(/([.+*?=^!:${}()[\]|/\\])/g, '\\$1')
+  function escapeString(str) {
+      return str.replace(/([.+*?=^!:${}()[\]|/\\])/g, "\\$1");
   }
-
-  /**
-   * Escape the capturing group by escaping special characters and meaning.
-   *
-   * @param  {string} group
-   * @return {string}
-   */
-  function escapeGroup (group) {
-    return group.replace(/([=!:$/()])/g, '\\$1')
-  }
-
   /**
    * Get the flags for a regexp from the options.
-   *
-   * @param  {Object} options
-   * @return {string}
    */
-  function flags (options) {
-    return options && options.sensitive ? '' : 'i'
+  function flags(options) {
+      return options && options.sensitive ? "" : "i";
   }
-
   /**
    * Pull out keys from a regexp.
-   *
-   * @param  {!RegExp} path
-   * @param  {Array=}  keys
-   * @return {!RegExp}
    */
-  function regexpToRegexp (path, keys) {
-    if (!keys) { return path }
-
-    // Use a negative lookahead to match only capturing groups.
-    var groups = path.source.match(/\((?!\?)/g);
-
-    if (groups) {
-      for (var i = 0; i < groups.length; i++) {
-        keys.push({
-          name: i,
-          prefix: null,
-          delimiter: null,
-          optional: false,
-          repeat: false,
-          pattern: null
-        });
+  function regexpToRegexp(path, keys) {
+      if (!keys)
+          { return path; }
+      // Use a negative lookahead to match only capturing groups.
+      var groups = path.source.match(/\((?!\?)/g);
+      if (groups) {
+          for (var i = 0; i < groups.length; i++) {
+              keys.push({
+                  name: i,
+                  prefix: "",
+                  suffix: "",
+                  modifier: "",
+                  pattern: ""
+              });
+          }
       }
-    }
-
-    return path
+      return path;
   }
-
   /**
    * Transform an array into a regexp.
-   *
-   * @param  {!Array}  path
-   * @param  {Array=}  keys
-   * @param  {Object=} options
-   * @return {!RegExp}
    */
-  function arrayToRegexp (path, keys, options) {
-    var parts = [];
-
-    for (var i = 0; i < path.length; i++) {
-      parts.push(pathToRegexp(path[i], keys, options).source);
-    }
-
-    return new RegExp('(?:' + parts.join('|') + ')', flags(options))
+  function arrayToRegexp(paths, keys, options) {
+      var parts = paths.map(function (path) { return pathToRegexp(path, keys, options).source; });
+      return new RegExp("(?:" + parts.join("|") + ")", flags(options));
   }
-
   /**
    * Create a path regexp from string input.
-   *
-   * @param  {string}  path
-   * @param  {Array=}  keys
-   * @param  {Object=} options
-   * @return {!RegExp}
    */
-  function stringToRegexp (path, keys, options) {
-    return tokensToRegExp(parse(path, options), keys, options)
+  function stringToRegexp(path, keys, options) {
+      return tokensToRegexp(parse(path, options), keys, options);
   }
-
   /**
    * Expose a function for taking tokens and returning a RegExp.
-   *
-   * @param  {!Array}  tokens
-   * @param  {Array=}  keys
-   * @param  {Object=} options
-   * @return {!RegExp}
    */
-  function tokensToRegExp (tokens, keys, options) {
-    options = options || {};
-
-    var strict = options.strict;
-    var start = options.start !== false;
-    var end = options.end !== false;
-    var delimiter = options.delimiter || DEFAULT_DELIMITER;
-    var endsWith = [].concat(options.endsWith || []).map(escapeString).concat('$').join('|');
-    var route = start ? '^' : '';
-
-    // Iterate over the tokens and create our regexp string.
-    for (var i = 0; i < tokens.length; i++) {
-      var token = tokens[i];
-
-      if (typeof token === 'string') {
-        route += escapeString(token);
-      } else {
-        var capture = token.repeat
-          ? '(?:' + token.pattern + ')(?:' + escapeString(token.delimiter) + '(?:' + token.pattern + '))*'
-          : token.pattern;
-
-        if (keys) { keys.push(token); }
-
-        if (token.optional) {
-          if (!token.prefix) {
-            route += '(' + capture + ')?';
-          } else {
-            route += '(?:' + escapeString(token.prefix) + '(' + capture + '))?';
+  function tokensToRegexp(tokens, keys, options) {
+      if (options === void 0) { options = {}; }
+      var _a = options.strict, strict = _a === void 0 ? false : _a, _b = options.start, start = _b === void 0 ? true : _b, _c = options.end, end = _c === void 0 ? true : _c, _d = options.encode, encode = _d === void 0 ? function (x) { return x; } : _d;
+      var endsWith = "[" + escapeString(options.endsWith || "") + "]|$";
+      var delimiter = "[" + escapeString(options.delimiter || "/#?") + "]";
+      var route = start ? "^" : "";
+      // Iterate over the tokens and create our regexp string.
+      for (var _i = 0, tokens_1 = tokens; _i < tokens_1.length; _i++) {
+          var token = tokens_1[_i];
+          if (typeof token === "string") {
+              route += escapeString(encode(token));
           }
-        } else {
-          route += escapeString(token.prefix) + '(' + capture + ')';
-        }
+          else {
+              var prefix = escapeString(encode(token.prefix));
+              var suffix = escapeString(encode(token.suffix));
+              if (token.pattern) {
+                  if (keys)
+                      { keys.push(token); }
+                  if (prefix || suffix) {
+                      if (token.modifier === "+" || token.modifier === "*") {
+                          var mod = token.modifier === "*" ? "?" : "";
+                          route += "(?:" + prefix + "((?:" + token.pattern + ")(?:" + suffix + prefix + "(?:" + token.pattern + "))*)" + suffix + ")" + mod;
+                      }
+                      else {
+                          route += "(?:" + prefix + "(" + token.pattern + ")" + suffix + ")" + token.modifier;
+                      }
+                  }
+                  else {
+                      route += "(" + token.pattern + ")" + token.modifier;
+                  }
+              }
+              else {
+                  route += "(?:" + prefix + suffix + ")" + token.modifier;
+              }
+          }
       }
-    }
-
-    if (end) {
-      if (!strict) { route += '(?:' + escapeString(delimiter) + ')?'; }
-
-      route += endsWith === '$' ? '$' : '(?=' + endsWith + ')';
-    } else {
-      var endToken = tokens[tokens.length - 1];
-      var isEndDelimited = typeof endToken === 'string'
-        ? endToken[endToken.length - 1] === delimiter
-        : endToken === undefined;
-
-      if (!strict) { route += '(?:' + escapeString(delimiter) + '(?=' + endsWith + '))?'; }
-      if (!isEndDelimited) { route += '(?=' + escapeString(delimiter) + '|' + endsWith + ')'; }
-    }
-
-    return new RegExp(route, flags(options))
+      if (end) {
+          if (!strict)
+              { route += delimiter + "?"; }
+          route += !options.endsWith ? "$" : "(?=" + endsWith + ")";
+      }
+      else {
+          var endToken = tokens[tokens.length - 1];
+          var isEndDelimited = typeof endToken === "string"
+              ? delimiter.indexOf(endToken[endToken.length - 1]) > -1
+              : // tslint:disable-next-line
+                  endToken === undefined;
+          if (!strict) {
+              route += "(?:" + delimiter + "(?=" + endsWith + "))?";
+          }
+          if (!isEndDelimited) {
+              route += "(?=" + delimiter + "|" + endsWith + ")";
+          }
+      }
+      return new RegExp(route, flags(options));
   }
-
   /**
    * Normalize the given path string, returning a regular expression.
    *
    * An empty array can be passed in for the keys, which will hold the
    * placeholder key descriptions. For example, using `/user/:id`, `keys` will
    * contain `[{ name: 'id', delimiter: '/', optional: false, repeat: false }]`.
-   *
-   * @param  {(string|RegExp|Array)} path
-   * @param  {Array=}                keys
-   * @param  {Object=}               options
-   * @return {!RegExp}
    */
-  function pathToRegexp (path, keys, options) {
-    if (path instanceof RegExp) {
-      return regexpToRegexp(path, keys)
-    }
-
-    if (Array.isArray(path)) {
-      return arrayToRegexp(/** @type {!Array} */ (path), keys, options)
-    }
-
-    return stringToRegexp(/** @type {string} */ (path), keys, options)
+  function pathToRegexp(path, keys, options) {
+      if (path instanceof RegExp)
+          { return regexpToRegexp(path, keys); }
+      if (Array.isArray(path))
+          { return arrayToRegexp(path, keys, options); }
+      return stringToRegexp(path, keys, options);
   }
-  pathToRegexp_1.parse = parse_1;
-  pathToRegexp_1.compile = compile_1;
-  pathToRegexp_1.tokensToFunction = tokensToFunction_1;
-  pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
 
   var History = {
     queue: [],
@@ -5653,8 +5677,8 @@
         if ($pageShadowEl) { $pageShadowEl[0].style.opacity = ''; }
         if ($pageOpacityEl) { $pageOpacityEl[0].style.opacity = ''; }
         if (dynamicNavbar) {
-          $currentNavbarEl.removeClass('navbar-current').addClass('navbar-next');
-          $previousNavbarEl.removeClass('navbar-previous').addClass('navbar-current').removeAttr('aria-hidden');
+          router.setNavbarPosition($currentNavbarEl, 'next');
+          router.setNavbarPosition($previousNavbarEl, 'current', false);
         }
         pageChanged = true;
       }
@@ -6090,6 +6114,9 @@
         .removeClass('navbar-previous navbar-current navbar-next')
         .addClass(("navbar-" + newPagePosition + (isMaster ? ' navbar-master' : '') + (isDetail ? ' navbar-master-detail' : '') + (isDetailRoot ? ' navbar-master-detail-root' : '')))
         .removeClass('stacked');
+      if (isMaster || isDetail) {
+        router.emit('navbarRole', $newNavbarEl[0], { role: isMaster ? 'master' : 'detail', detailRoot: !!isDetailRoot });
+      }
     }
 
     // Find Old Page
@@ -6111,6 +6138,8 @@
         $oldNavbarEl = $navbarsInView.filter(function (index, navbarEl) { return navbarEl !== $newNavbarEl[0]; });
       }
     } else {
+      var removedPageEls = [];
+      var removedNavbarEls = [];
       if ($pagesInView.length > 1) {
         var i$2 = 0;
         for (i$2 = 0; i$2 < $pagesInView.length - 1; i$2 += 1) {
@@ -6122,6 +6151,7 @@
             router.emit('pageMasterStack', $pagesInView[i$2]);
             if (dynamicNavbar) {
               $(app.navbar.getElByPage(masterPageEl)).addClass('navbar-master-stacked');
+              router.emit('navbarMasterStack', app.navbar.getElByPage(masterPageEl));
             }
             continue; // eslint-disable-line
           }
@@ -6135,9 +6165,11 @@
             }
           } else {
             // Page remove event
+            removedPageEls.push($pagesInView[i$2]);
             router.pageCallback('beforeRemove', $pagesInView[i$2], $navbarsInView && $navbarsInView[i$2], 'previous', undefined, options);
             router.removePage($pagesInView[i$2]);
             if (dynamicNavbar && oldNavbarEl) {
+              removedNavbarEls.push(oldNavbarEl);
               router.removeNavbar(oldNavbarEl);
             }
           }
@@ -6145,12 +6177,14 @@
       }
       $oldPage = $viewEl
         .children('.page:not(.stacked)')
-        .filter(function (index, page) { return page !== $newPage[0]; });
+        .filter(function (index, pageEl) { return pageEl !== $newPage[0] && removedPageEls.indexOf(pageEl) < 0; });
       if (dynamicNavbar) {
         $oldNavbarEl = $navbarsEl
           .children('.navbar:not(.stacked)')
-          .filter(function (index, navbarEl) { return navbarEl !== $newNavbarEl[0]; });
+          .filter(function (index, navbarEl) { return navbarEl !== $newNavbarEl[0] && removedNavbarEls.indexOf(removedNavbarEls) < 0; });
       }
+      removedPageEls = [];
+      removedNavbarEls = [];
     }
 
     if (isDetail && !options.reloadAll) {
@@ -6341,14 +6375,9 @@
       router.pageCallback('afterIn', $newPage, $newNavbarEl, newPagePosition, 'current', options);
       if (options.reloadCurrent && options.clearPreviousHistory) { router.clearPreviousHistory(); }
       if (reloadDetail) {
-        masterPageEl.classList.add('page-previous');
-        masterPageEl.classList.remove('page-current');
-        $(masterPageEl).trigger('page:position', { position: 'previous' });
-        router.emit('pagePosition', masterPageEl, 'previous');
-
+        router.setPagePosition($(masterPageEl), 'previous');
         if (masterPageEl.f7Page && masterPageEl.f7Page.navbarEl) {
-          masterPageEl.f7Page.navbarEl.classList.add('navbar-previous');
-          masterPageEl.f7Page.navbarEl.classList.remove('navbar-current');
+          router.setNavbarPosition($(masterPageEl.f7Page.navbarEl), 'previous');
         }
       }
       return router;
@@ -6364,22 +6393,11 @@
 
     // Animation
     function afterAnimation() {
-      var pageClasses = 'page-previous page-current page-next';
-      var navbarClasses = 'navbar-previous navbar-current navbar-next';
-      $newPage.removeClass(pageClasses).addClass('page-current').removeAttr('aria-hidden').trigger('page:position', { position: 'current' });
-      router.emit('pagePosition', $newPage[0], 'current');
-      $oldPage.removeClass(pageClasses).addClass('page-previous').trigger('page:position', { position: 'previous' });
-      router.emit('pagePosition', $oldPage[0], 'previous');
-
-      if (!$oldPage.hasClass('page-master')) {
-        $oldPage.attr('aria-hidden', 'true');
-      }
+      router.setPagePosition($newPage, 'current', false);
+      router.setPagePosition($oldPage, 'previous', !$oldPage.hasClass('page-master'));
       if (dynamicNavbar) {
-        $newNavbarEl.removeClass(navbarClasses).addClass('navbar-current').removeAttr('aria-hidden');
-        $oldNavbarEl.removeClass(navbarClasses).addClass('navbar-previous');
-        if (!$oldNavbarEl.hasClass('navbar-master')) {
-          $oldNavbarEl.attr('aria-hidden', 'true');
-        }
+        router.setNavbarPosition($newNavbarEl, 'current', false);
+        router.setNavbarPosition($oldNavbarEl, 'previous', !$oldNavbarEl.hasClass('navbar-master'));
       }
       // After animation event
       router.allowPageChange = true;
@@ -6417,15 +6435,11 @@
       }
     }
     function setPositionClasses() {
-      var pageClasses = 'page-previous page-current page-next';
-      var navbarClasses = 'navbar-previous navbar-current navbar-next';
-      $oldPage.removeClass(pageClasses).addClass('page-current').removeAttr('aria-hidden').trigger('page:position', { position: 'current' });
-      router.emit('pagePosition', $oldPage[0], 'current');
-      $newPage.removeClass(pageClasses).addClass('page-next').removeAttr('aria-hidden').trigger('page:position', { position: 'next' });
-      router.emit('pagePosition', $newPage[0], 'next');
+      router.setPagePosition($oldPage, 'current', false);
+      router.setPagePosition($newPage, 'next', false);
       if (dynamicNavbar) {
-        $oldNavbarEl.removeClass(navbarClasses).addClass('navbar-current').removeAttr('aria-hidden');
-        $newNavbarEl.removeClass(navbarClasses).addClass('navbar-next').removeAttr('aria-hidden');
+        router.setNavbarPosition($oldNavbarEl, 'current', false);
+        router.setNavbarPosition($newNavbarEl, 'next', false);
       }
     }
     if (options.animate && !(isMaster && app.width >= router.params.masterDetailBreakpoint)) {
@@ -7345,6 +7359,9 @@
         .addClass(("navbar-previous" + (isMaster ? ' navbar-master' : '') + (isDetail ? ' navbar-master-detail' : '') + (isDetailRoot ? ' navbar-master-detail-root' : '')))
         .removeClass('stacked')
         .removeAttr('aria-hidden');
+      if (isMaster || isDetailRoot) {
+        router.emit('navbarRole', $newNavbarEl[0], { role: isMaster ? 'master' : 'detail', detailRoot: !!isDetailRoot });
+      }
     }
 
     // Remove previous page in case of "forced"
@@ -7469,6 +7486,7 @@
         router.emit('pageMasterUnstack', $newPage[0]);
         if (dynamicNavbar) {
           $(app.navbar.getElByPage($newPage)).removeClass('navbar-master-stacked');
+          router.emi('navbarMasterUnstack', app.navbar.getElByPage($newPage));
         }
       }
       // Page init and before init events
@@ -7591,15 +7609,11 @@
     // Animation
     function afterAnimation() {
       // Set classes
-      var pageClasses = 'page-previous page-current page-next';
-      var navbarClasses = 'navbar-previous navbar-current navbar-next';
-      $newPage.removeClass(pageClasses).addClass('page-current').removeAttr('aria-hidden').trigger('page:position', { position: 'current' });
-      router.emit('pagePosition', $newPage[0], 'current');
-      $oldPage.removeClass(pageClasses).addClass('page-next').attr('aria-hidden', 'true').trigger('page:position', { position: 'next' });
-      router.emit('pagePosition', $oldPage[0], 'next');
+      router.setPagePosition($newPage, 'current', false);
+      router.setPagePosition($oldPage, 'next', true);
       if (dynamicNavbar) {
-        $newNavbarEl.removeClass(navbarClasses).addClass('navbar-current').removeAttr('aria-hidden');
-        $oldNavbarEl.removeClass(navbarClasses).addClass('navbar-next').attr('aria-hidden', 'true');
+        router.setNavbarPosition($newNavbarEl, 'current', false);
+        router.setNavbarPosition($oldNavbarEl, 'next', true);
       }
 
       // After animation event
@@ -7636,15 +7650,11 @@
     }
 
     function setPositionClasses() {
-      var pageClasses = 'page-previous page-current page-next';
-      var navbarClasses = 'navbar-previous navbar-current navbar-next';
-      $oldPage.removeClass(pageClasses).addClass('page-current').trigger('page:position', { position: 'current' });
-      router.emit('pagePosition', $oldPage[0], 'current');
-      $newPage.removeClass(pageClasses).addClass('page-previous').removeAttr('aria-hidden').trigger('page:position', { position: 'previous' });
-      router.emit('pagePosition', $newPage[0], 'previous');
+      router.setPagePosition($oldPage, 'current');
+      router.setPagePosition($newPage, 'previous', false);
       if (dynamicNavbar) {
-        $oldNavbarEl.removeClass(navbarClasses).addClass('navbar-current');
-        $newNavbarEl.removeClass(navbarClasses).addClass('navbar-previous').removeAttr('aria-hidden');
+        router.setNavbarPosition($oldNavbarEl, 'current');
+        router.setNavbarPosition($newNavbarEl, 'previous', false);
       }
     }
 
@@ -8265,10 +8275,12 @@
         (direction === 'forward' ? $newPageEl : $oldPageEl).animationEnd(onCustomTransitionDone);
         if (dynamicNavbar) {
           if ($newNavbarEl && $newPageEl) {
+            router.setNavbarPosition($newNavbarEl, '');
             $newNavbarEl.removeClass('navbar-next navbar-previous navbar-current');
             $newPageEl.prepend($newNavbarEl);
           }
           if ($oldNavbarEl && $oldPageEl) {
+            router.setNavbarPosition($oldNavbarEl, '');
             $oldNavbarEl.removeClass('navbar-next navbar-previous navbar-current');
             $oldPageEl.prepend($oldNavbarEl);
           }
@@ -8567,7 +8579,7 @@
       var query = ref.query;
 
       var path = route.path;
-      var toUrl = pathToRegexp_1.compile(path);
+      var toUrl = compile(path);
       var url;
       try {
         url = toUrl(params || {});
@@ -8645,7 +8657,7 @@
         var matched;
         pathsToMatch.forEach(function (pathToMatch) {
           if (matched) { return; }
-          matched = pathToRegexp_1(pathToMatch, keys).exec(path);
+          matched = pathToRegexp(pathToMatch, keys).exec(path);
         });
 
         if (matched) {
@@ -8788,6 +8800,35 @@
           },
         });
       });
+    };
+
+    Router.prototype.setNavbarPosition = function setNavbarPosition ($el, position, ariaHidden) {
+      var router = this;
+      $el.removeClass('navbar-previous navbar-current navbar-next');
+      if (position) {
+        $el.addClass(("navbar-" + position));
+      }
+
+      if (ariaHidden === false) {
+        $el.removeAttr('aria-hidden');
+      } else if (ariaHidden === true) {
+        $el.attr('aria-hidden', 'true');
+      }
+      $el.trigger('navbar:position', { position: position });
+      router.emit('navbarPosition', $el[0], position);
+    };
+
+    Router.prototype.setPagePosition = function setPagePosition ($el, position, ariaHidden) {
+      var router = this;
+      $el.removeClass('page-previous page-current page-next');
+      $el.addClass(("page-" + position));
+      if (ariaHidden === false) {
+        $el.removeAttr('aria-hidden');
+      } else if (ariaHidden === true) {
+        $el.attr('aria-hidden', 'true');
+      }
+      $el.trigger('page:position', { position: position });
+      router.emit('pagePosition', $el[0], position);
     };
 
     // Remove theme elements
@@ -9171,14 +9212,14 @@
         router.$el.children('.page:not(.stacked)').each(function (index, pageEl) {
           var $pageEl = $(pageEl);
           var $navbarEl;
-          $pageEl.addClass('page-current');
+          router.setPagePosition($pageEl, 'current');
           if (router.dynamicNavbar) {
             $navbarEl = $pageEl.children('.navbar');
             if ($navbarEl.length > 0) {
               if (!router.$navbarsEl.parents(doc).length) {
                 router.$el.prepend(router.$navbarsEl);
               }
-              $navbarEl.addClass('navbar-current');
+              router.setNavbarPosition($navbarEl, 'current');
               router.$navbarsEl.append($navbarEl);
               if ($navbarEl.children('.title-large').length) {
                 $navbarEl.addClass('navbar-large');
@@ -9323,6 +9364,15 @@
         routes: [],
         routesAdd: [],
       };
+
+      if ($el.length === 0) {
+        var message = 'Framework7: can\'t create a View instance because ';
+        message += (typeof el === 'string')
+          ? ("the selector \"" + el + "\" didn't match any element")
+          : 'el must be an HTMLElement or Dom7 object';
+
+        throw new Error(message);
+      }
 
       // Default View params
       view.params = Utils.extend(defaults, app.params.view, viewParams);
@@ -9697,7 +9747,7 @@
             try {
               context = JSON.parse(context);
             } catch (err) {
-              reject();
+              reject(err);
               throw (err);
             }
           }
@@ -9716,12 +9766,15 @@
               },
             }
           );
+          if (options.componentOptions && options.componentOptions.el) {
+            componentOptions.el = options.componentOptions.el;
+          }
           app.component.create(componentOptions, extendContext)
             .then(function (createdComponent) {
               resolve(createdComponent.el);
             })
             .catch(function (err) {
-              reject();
+              reject(err);
               throw new Error(err);
             });
         }
@@ -10937,6 +10990,7 @@
       enumerable: true,
       configurable: true,
       get: function get() {
+        if (app.rootComponent) { return app.rootComponent; }
         var root = Utils.merge({}, app.data, app.methods);
         if (win && win.Proxy) {
           root = new win.Proxy(root, {
@@ -11150,12 +11204,14 @@
     }
     self.__requestAnimationFrameId = win.requestAnimationFrame(function () {
       if (self.__updateIsPending) { update(); }
-      self.__updateQueue.forEach(function (resolver) { return resolver(); });
+      var resolvers = [].concat( self.__updateQueue );
       self.__updateQueue = [];
       self.__updateIsPending = false;
       win.cancelAnimationFrame(self.__requestAnimationFrameId);
       delete self.__requestAnimationFrameId;
       delete self.__updateIsPending;
+      resolvers.forEach(function (resolver) { return resolver(); });
+      resolvers = [];
     });
   };
 
@@ -11175,8 +11231,8 @@
     var self = this;
     return new Promise(function (resolve) {
       function resolver() {
-        if (callback) { callback(); }
         resolve();
+        if (callback) { callback(); }
       }
       self.__updateIsPending = true;
       self.__updateQueue.push(resolver);
@@ -11185,9 +11241,23 @@
   };
 
   Component.prototype.$setState = function $setState (mergeState, callback) {
+      if ( mergeState === void 0 ) mergeState = {};
+
     var self = this;
     Utils.merge(self, mergeState);
     return self.$update(callback);
+  };
+
+  Component.prototype.$f7ready = function $f7ready (callback) {
+      var this$1 = this;
+
+    if (this.$f7.initialized) {
+      callback(this.$f7);
+      return;
+    }
+    this.$f7.once('init', function () {
+      callback(this$1.$f7);
+    });
   };
 
   Component.prototype.$mount = function $mount (mountMethod) {
@@ -11289,6 +11359,7 @@
           rules = rules
             .split(',')
             .map(function (rule) {
+              if (rule.indexOf('@') >= 0) { return rule; }
               if (rule.indexOf(("[data-f7-" + id + "]")) >= 0) { return rule; }
               return ("[data-f7-" + id + "] " + (rule.trim()));
             })
@@ -11423,7 +11494,7 @@
     registrations: [],
     register: function register(path, scope) {
       var app = this;
-      if (!('serviceWorker' in window.navigator) || !app.serviceWorker.container) {
+      if (!('serviceWorker' in win.navigator) || !app.serviceWorker.container) {
         return new Promise(function (resolve, reject) {
           reject(new Error('Service worker is not supported'));
         });
@@ -11442,7 +11513,7 @@
     },
     unregister: function unregister(registration) {
       var app = this;
-      if (!('serviceWorker' in window.navigator) || !app.serviceWorker.container) {
+      if (!('serviceWorker' in win.navigator) || !app.serviceWorker.container) {
         return new Promise(function (resolve, reject) {
           reject(new Error('Service worker is not supported'));
         });
@@ -11480,7 +11551,7 @@
       var app = this;
       Utils.extend(app, {
         serviceWorker: {
-          container: ('serviceWorker' in window.navigator) ? window.navigator.serviceWorker : undefined,
+          container: ('serviceWorker' in win.navigator) ? win.navigator.serviceWorker : undefined,
           registrations: SW.registrations,
           register: SW.register.bind(app),
           unregister: SW.unregister.bind(app),
@@ -11489,7 +11560,7 @@
     },
     on: {
       init: function init() {
-        if (!('serviceWorker' in window.navigator)) { return; }
+        if (!('serviceWorker' in win.navigator)) { return; }
         var app = this;
         if (!app.serviceWorker.container) { return; }
         var paths = app.params.serviceWorker.path;
@@ -11792,6 +11863,23 @@
           if (!view) { return; }
           view.destroy();
         });
+      },
+    },
+    vnode: {
+      'view-init': {
+        insert: function insert(vnode) {
+          var app = this;
+          var viewEl = vnode.elm;
+          if (viewEl.f7View) { return; }
+          var viewParams = $(viewEl).dataset();
+          app.views.create(viewEl, viewParams);
+        },
+        destroy: function destroy(vnode) {
+          var viewEl = vnode.elm;
+          var view = viewEl.f7View;
+          if (!view) { return; }
+          view.destroy();
+        },
       },
     },
   };
@@ -12426,31 +12514,39 @@
         if ($clickedEl.closest('a').length > 0) {
           return;
         }
-        var pageContent;
+        var $pageContentEl;
+
         // Find active page
-        var navbar = $clickedEl.parents('.navbar');
+        var $navbarEl = $clickedEl.parents('.navbar');
+        var $navbarsEl = $navbarEl.parents('.navbars');
 
         // Static Layout
-        pageContent = navbar.parents('.page-content');
+        $pageContentEl = $navbarEl.parents('.page-content');
 
-        if (pageContent.length === 0) {
+        if ($pageContentEl.length === 0) {
           // Fixed Layout
-          if (navbar.parents('.page').length > 0) {
-            pageContent = navbar.parents('.page').find('.page-content');
+          if ($navbarEl.parents('.page').length > 0) {
+            $pageContentEl = $navbarEl.parents('.page').find('.page-content');
+          }
+          // Through Layout iOS
+          if ($pageContentEl.length === 0 && $navbarsEl.length) {
+            if ($navbarsEl.nextAll('.page-current:not(.stacked)').length > 0) {
+              $pageContentEl = $navbarsEl.nextAll('.page-current:not(.stacked)').find('.page-content');
+            }
           }
           // Through Layout
-          if (pageContent.length === 0) {
-            if (navbar.nextAll('.page-current:not(.stacked)').length > 0) {
-              pageContent = navbar.nextAll('.page-current:not(.stacked)').find('.page-content');
+          if ($pageContentEl.length === 0) {
+            if ($navbarEl.nextAll('.page-current:not(.stacked)').length > 0) {
+              $pageContentEl = $navbarEl.nextAll('.page-current:not(.stacked)').find('.page-content');
             }
           }
         }
-        if (pageContent && pageContent.length > 0) {
+        if ($pageContentEl && $pageContentEl.length > 0) {
           // Check for tab
-          if (pageContent.hasClass('tab')) {
-            pageContent = pageContent.parent('.tabs').children('.page-content.tab-active');
+          if ($pageContentEl.hasClass('tab')) {
+            $pageContentEl = $pageContentEl.parent('.tabs').children('.page-content.tab-active');
           }
-          if (pageContent.length > 0) { pageContent.scrollTop(0, 300); }
+          if ($pageContentEl.length > 0) { $pageContentEl.scrollTop(0, 300); }
         }
       },
     },
@@ -12677,6 +12773,14 @@
         app.root.find('.tabbar, .tabbar-labels').each(function (index, tabbarEl) {
           app.toolbar.init(tabbarEl);
         });
+      },
+    },
+    vnode: {
+      tabbar: {
+        insert: function insert(vnode) {
+          var app = this;
+          app.toolbar.init(vnode.elm);
+        },
       },
     },
   };
@@ -13167,4 +13271,4 @@
 
   return Framework7;
 
-}));
+})));

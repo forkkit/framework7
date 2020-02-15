@@ -7,7 +7,6 @@ import __reactComponentSetProps from '../runtime-helpers/react-component-set-pro
 class F7Appbar extends React.Component {
   constructor(props, context) {
     super(props, context);
-    this.__reactRefs = {};
   }
 
   render() {
@@ -27,9 +26,6 @@ class F7Appbar extends React.Component {
 
     if (inner) {
       innerEl = React.createElement('div', {
-        ref: __reactNode => {
-          this.__reactRefs['inner'] = __reactNode;
-        },
         className: Utils.classNames('appbar-inner', innerClass, innerClassName)
       }, this.slots['default']);
     }
@@ -39,9 +35,6 @@ class F7Appbar extends React.Component {
       'no-hairline': noHairline
     }, Mixins.colorClasses(props));
     return React.createElement('div', {
-      ref: __reactNode => {
-        this.__reactRefs['el'] = __reactNode;
-      },
       id: id,
       style: style,
       className: classes
@@ -51,12 +44,6 @@ class F7Appbar extends React.Component {
   get slots() {
     return __reactComponentSlots(this.props);
   }
-
-  get refs() {
-    return this.__reactRefs;
-  }
-
-  set refs(refs) {}
 
 }
 

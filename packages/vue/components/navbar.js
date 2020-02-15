@@ -49,7 +49,12 @@ export default {
       }
 
       return {
-        _theme: $f7 ? self.$theme : null
+        _theme: $f7 ? self.$theme : null,
+        routerPositionClass: '',
+        largeCollapsed: false,
+        routerNavbarRole: null,
+        routerNavbarRoleDetailRoot: false,
+        routerNavbarMasterStack: false
       };
     })();
 
@@ -82,7 +87,11 @@ export default {
       largeTransparent,
       titleLarge
     } = props;
-    const theme = self.state.theme;
+    const {
+      _theme: theme,
+      routerPositionClass,
+      largeCollapsed
+    } = self.state;
     let leftEl;
     let titleEl;
     let rightEl;
@@ -90,10 +99,17 @@ export default {
     const addLeftTitleClass = theme && theme.ios && self.$f7 && !self.$f7.params.navbar.iosCenterTitle;
     const addCenterTitleClass = theme && theme.md && self.$f7 && self.$f7.params.navbar.mdCenterTitle || theme && theme.aurora && self.$f7 && self.$f7.params.navbar.auroraCenterTitle;
     const slots = self.$slots;
-    const classes = Utils.classNames(className, 'navbar', {
+    const classes = Utils.classNames(className, 'navbar', routerPositionClass && routerPositionClass, {
       'navbar-hidden': hidden,
       'navbar-large': large,
-      'navbar-large-transparent': largeTransparent
+      'navbar-large-transparent': largeTransparent,
+      'navbar-large-collapsed': large && largeCollapsed,
+      'navbar-master': this.state.routerNavbarRole === 'master',
+      'navbar-master-detail': this.state.routerNavbarRole === 'detail',
+      'navbar-master-detail-root': this.state.routerNavbarRoleDetailRoot === true,
+      'navbar-master-stacked': this.state.routerNavbarMasterStack === true,
+      'no-shadow': noShadow,
+      'no-hairline': noHairline
     }, Mixins.colorClasses(props));
 
     if (backLink || slots['nav-left'] || slots.left) {
@@ -137,8 +153,6 @@ export default {
     const innerEl = _h('div', {
       class: Utils.classNames('navbar-inner', innerClass, innerClassName, {
         sliding,
-        'no-shadow': noShadow,
-        'no-hairline': noHairline,
         'navbar-inner-left-title': addLeftTitleClass,
         'navbar-inner-centered-title': addCenterTitleClass
       })
@@ -157,7 +171,7 @@ export default {
   },
 
   created() {
-    Utils.bindMethods(this, ['onBackClick', 'onHide', 'onShow', 'onExpand', 'onCollapse']);
+    Utils.bindMethods(this, ['onBackClick', 'onHide', 'onShow', 'onExpand', 'onCollapse', 'onNavbarPosition', 'onNavbarRole', 'onNavbarMasterStack', 'onNavbarMasterUnstack']);
   },
 
   mounted() {
@@ -172,6 +186,10 @@ export default {
       f7.on('navbarHide', self.onHide);
       f7.on('navbarCollapse', self.onCollapse);
       f7.on('navbarExpand', self.onExpand);
+      f7.on('navbarPosition', self.onNavbarPosition);
+      f7.on('navbarRole', self.onNavbarRole);
+      f7.on('navbarMasterStack', self.onNavbarMasterStack);
+      f7.on('navbarMasterUnstack', self.onNavbarMasterUnstack);
     });
   },
 
@@ -193,6 +211,10 @@ export default {
     f7.off('navbarHide', self.onHide);
     f7.off('navbarCollapse', self.onCollapse);
     f7.off('navbarExpand', self.onExpand);
+    f7.off('navbarPosition', self.onNavbarPosition);
+    f7.off('navbarRole', self.onNavbarRole);
+    f7.off('navbarMasterStack', self.onNavbarMasterStack);
+    f7.off('navbarMasterUnstack', self.onNavbarMasterUnstack);
     self.eventTargetEl = null;
     delete self.eventTargetEl;
   },
@@ -210,12 +232,47 @@ export default {
 
     onExpand(navbarEl) {
       if (this.eventTargetEl !== navbarEl) return;
+      this.setState({
+        largeCollapsed: false
+      });
       this.dispatchEvent('navbar:expand navbarExpand');
     },
 
     onCollapse(navbarEl) {
       if (this.eventTargetEl !== navbarEl) return;
+      this.setState({
+        largeCollapsed: true
+      });
       this.dispatchEvent('navbar:collapse navbarCollapse');
+    },
+
+    onNavbarPosition(navbarEl, position) {
+      if (this.eventTargetEl !== navbarEl) return;
+      this.setState({
+        routerPositionClass: position ? `navbar-${position}` : ''
+      });
+    },
+
+    onNavbarRole(navbarEl, rolesData) {
+      if (this.eventTargetEl !== navbarEl) return;
+      this.setState({
+        routerNavbarRole: rolesData.role,
+        routerNavbarRoleDetailRoot: rolesData.detailRoot
+      });
+    },
+
+    onNavbarMasterStack(navbarEl) {
+      if (this.eventTargetEl !== navbarEl) return;
+      this.setState({
+        routerNavbarMasterStack: true
+      });
+    },
+
+    onNavbarMasterUnstack(navbarEl) {
+      if (this.eventTargetEl !== navbarEl) return;
+      this.setState({
+        routerNavbarMasterStack: false
+      });
     },
 
     hide(animate) {

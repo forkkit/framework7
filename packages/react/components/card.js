@@ -74,6 +74,7 @@ class F7Card extends React.Component {
       hideNavbarOnOpen,
       hideToolbarOnOpen,
       hideStatusbarOnOpen,
+      scrollableEl,
       swipeToClose,
       closeByBackdropClick,
       backdrop,
@@ -117,6 +118,7 @@ class F7Card extends React.Component {
       'data-hide-navbar-on-open': typeof hideNavbarOnOpen === 'undefined' ? hideNavbarOnOpen : hideNavbarOnOpen.toString(),
       'data-hide-toolbar-on-open': typeof hideToolbarOnOpen === 'undefined' ? hideToolbarOnOpen : hideToolbarOnOpen.toString(),
       'data-hide-statusbar-on-open': typeof hideStatusbarOnOpen === 'undefined' ? hideStatusbarOnOpen : hideStatusbarOnOpen.toString(),
+      'data-scrollable-el': scrollableEl,
       'data-swipe-to-close': typeof swipeToClose === 'undefined' ? swipeToClose : swipeToClose.toString(),
       'data-close-by-backdrop-click': typeof closeByBackdropClick === 'undefined' ? closeByBackdropClick : closeByBackdropClick.toString(),
       'data-backdrop': typeof backdrop === 'undefined' ? backdrop : backdrop.toString(),
@@ -210,6 +212,10 @@ __reactComponentSetProps(F7Card, Object.assign({
   },
   hideStatusbarOnOpen: {
     type: Boolean,
+    default: undefined
+  },
+  scrollableEl: {
+    type: String,
     default: undefined
   },
   swipeToClose: {

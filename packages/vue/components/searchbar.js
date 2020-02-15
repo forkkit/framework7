@@ -318,7 +318,7 @@ export default {
 
     toggle() {
       if (!this.f7Searchbar) return undefined;
-      return this.toggle.disable();
+      return this.f7Searchbar.toggle();
     },
 
     clear() {

@@ -157,7 +157,9 @@ function initTouch() {
     }
   }
   function handleMouseMove() {
-    $('.active-state').removeClass('active-state');
+    if (!params.activeStateOnMouseMove) {
+      $('.active-state').removeClass('active-state');
+    }
     if (useRipple) {
       rippleTouchMove();
     }
@@ -348,16 +350,18 @@ function initTouch() {
 
 
   const passiveListener = Support.passiveListener ? { passive: true } : false;
+  const passiveListenerCapture = Support.passiveListener ? { passive: true, capture: true } : true;
   const activeListener = Support.passiveListener ? { passive: false } : false;
+  const activeListenerCapture = Support.passiveListener ? { passive: false, capture: true } : true;
 
   document.addEventListener('click', appClick, true);
 
   if (Support.passiveListener) {
-    document.addEventListener(app.touchEvents.start, appTouchStartActive, activeListener);
+    document.addEventListener(app.touchEvents.start, appTouchStartActive, activeListenerCapture);
     document.addEventListener(app.touchEvents.move, appTouchMoveActive, activeListener);
     document.addEventListener(app.touchEvents.end, appTouchEndActive, activeListener);
 
-    document.addEventListener(app.touchEvents.start, appTouchStartPassive, passiveListener);
+    document.addEventListener(app.touchEvents.start, appTouchStartPassive, passiveListenerCapture);
     document.addEventListener(app.touchEvents.move, appTouchMovePassive, passiveListener);
     document.addEventListener(app.touchEvents.end, appTouchEndPassive, passiveListener);
     if (Support.touch && Support.gestures) {
@@ -373,7 +377,7 @@ function initTouch() {
     document.addEventListener(app.touchEvents.start, (e) => {
       appTouchStartActive(e);
       appTouchStartPassive(e);
-    }, false);
+    }, true);
     document.addEventListener(app.touchEvents.move, (e) => {
       appTouchMoveActive(e);
       appTouchMovePassive(e);
@@ -408,6 +412,7 @@ function initTouch() {
     app.on('touchstart', handleMouseDown);
     app.on('touchmove', handleMouseMove);
     app.on('touchend', handleMouseUp);
+    document.addEventListener('pointercancel', handleMouseUp, { passive: true });
   }
   document.addEventListener('contextmenu', (e) => {
     if (params.disableContextMenu && (Device.ios || Device.android || Device.cordova)) {
@@ -434,11 +439,12 @@ export default {
       tapHoldPreventClicks: true,
       // Active State
       activeState: true,
-      activeStateElements: 'a, button, label, span, .actions-button, .stepper-button, .stepper-button-plus, .stepper-button-minus, .card-expandable, .menu-item, .link, .item-link',
+      activeStateElements: 'a, button, label, span, .actions-button, .stepper-button, .stepper-button-plus, .stepper-button-minus, .card-expandable, .menu-item, .link, .item-link, .accordion-item-toggle',
+      activeStateOnMouseMove: false,
       mdTouchRipple: true,
       iosTouchRipple: false,
       auroraTouchRipple: false,
-      touchRippleElements: '.ripple, .link, .item-link, .list-button, .links-list a, .button, button, .input-clear-button, .dialog-button, .tab-link, .item-radio, .item-checkbox, .actions-button, .searchbar-disable-button, .fab a, .checkbox, .radio, .data-table .sortable-cell:not(.input-cell), .notification-close-button, .stepper-button, .stepper-button-minus, .stepper-button-plus, .menu-item-content',
+      touchRippleElements: '.ripple, .link, .item-link, .list-button, .links-list a, .button, button, .input-clear-button, .dialog-button, .tab-link, .item-radio, .item-checkbox, .actions-button, .searchbar-disable-button, .fab a, .checkbox, .radio, .data-table .sortable-cell:not(.input-cell), .notification-close-button, .stepper-button, .stepper-button-minus, .stepper-button-plus, .menu-item-content, .list.accordion-list .accordion-item-toggle',
     },
   },
   instance: {

@@ -1,6 +1,165 @@
-<a href="https://www.patreon.com/vladimirkharlampidi"><img src="https://cdn.framework7.io/i/support-badge.png" height="20"></a>
+<a href="https://www.patreon.com/vladimirkharlampidi"><img src="https://framework7.io/i/support-badge.png" height="20"></a>
 
 # Change Log
+
+# [v5.4.1](https://github.com/framework7io/framework7/compare/v5.4.0...v5.4.1) - February 8, 2020
+  * Core
+    * Touch
+      * Fully switch to `pointer` events where supported
+    * Tooltip
+      * New `trigger` parameter to define how to open Tooltip - on `hover` (default) or on `click`
+    * Swiper - updated to latest 5.3.1
+      * Fixed issue when slider could stuck after last slide (#3414)
+      * Added `label` to list of form events to keep clicks on it (#3407)
+    * Request
+      * Now it won't set headers with `undefined` value
+  * Vue/React/Svelte
+    * Tooltip
+      * New `tooltipTrigger` prop for `Button`, `FabButton`, `Fab`, `Icon`, `Link`, `ListButton` and `ListItem` components
+  * Minor fixes
+
+# [v5.4.0](https://github.com/framework7io/framework7/compare/v5.3.2...v5.4.0) - January 29, 2020
+  * Framework7 Svelte 🎉
+  * Core
+    * Autocomplete
+      * Now it falls back to not "routable" modal when there is no View passed or it can't be found.
+    * Calendar
+      * Now it falls back to not "routable" modal when there is no View passed or it can't be found.
+    * Card
+      * New `scrollabelEl` parameter that allows to define child scrollable element (if used) to correctly handle expandable card close with touch move
+    * Color Picker
+      * Now it falls back to not "routable" modal when there is no View passed or it can't be found.
+    * Photo Browser
+      * Now it falls back to not "routable" modal when there is no View passed or it can't be found.
+    * Picker
+      * Now it falls back to not "routable" modal when there is no View passed or it can't be found.
+      * New `scrollToEl` parameter to specify cutom elements to scroll to on open
+    * Smart Select
+      * Now it falls back to not "routable" modal when there is no View passed or it can't be found.
+  * React/Vue
+    * Card
+      * New `scrollabelEl` prop that allows to define child scrollable element (if used) to correctly handle expandable card close with touch move
+  * Lot of minor fixes
+
+# [v5.4.0-beta.3](https://github.com/framework7io/framework7/compare/v5.4.0-beta.2...v5.4.0-beta.3) - January 25, 2020
+  * Core
+    * Autocomplete
+      * Now it falls back to not "routable" modal when there is no View passed or it can't be found.
+    * Calendar
+      * Now it falls back to not "routable" modal when there is no View passed or it can't be found.
+    * Color Picker
+      * Now it falls back to not "routable" modal when there is no View passed or it can't be found.
+    * Photo Browser
+      * Now it falls back to not "routable" modal when there is no View passed or it can't be found.
+    * Picker
+      * Now it falls back to not "routable" modal when there is no View passed or it can't be found.
+    * Smart Select
+      * Now it falls back to not "routable" modal when there is no View passed or it can't be found.
+
+# [v5.4.0-beta.2](https://github.com/framework7io/framework7/compare/v5.4.0-beta.1...v5.4.0-beta.2) - January 25, 2020
+  * Fix missing packages
+
+# [v5.4.0-beta.1](https://github.com/framework7io/framework7/compare/v5.3.2...v5.4.0-beta.1) - January 25, 2020
+  * Card
+    * New `scrollabelEl` parameter that allows to define child scrollable element (if used) to correctly handle expandable card close with touch move
+  * React/Vue
+    * Card
+      * New `scrollabelEl` prop that allows to define child scrollable element (if used) to correctly handle expandable card close with touch move
+  * Framework7 Svelte 🎉
+  * Minor fixes
+
+# [v5.3.2](https://github.com/framework7io/framework7/compare/v5.3.0...v5.3.2) - January 18, 2020
+  * Core
+    * Component
+      * Now main app component will be created on app init respecting cordova's deviceready event
+    * Toolbar
+      * Fixed Tabbar init when it used in main app component
+    * Picker
+      * Added `backdrop` parameter support
+    * Swiper updated to latest 5.3.0
+      * Core
+        * New `slidesPerGroupSkip` behavior (#3361)
+        * New ratio-based breakpoints (#3389)
+        * Added SCSS interpolation (#3373, #3374)
+      * Mousehweel
+        * Fixed issue when it can fail on load (#3383)
+    * Touch
+      * Fixed issue when it could prevent Leaflet map controls on iOS 12.x
+  * Vue/React
+    * Navbar - fixed issue when it could disappear with custom transitions
+  * Minor fixes
+
+# [v5.3.0](https://github.com/framework7io/framework7/compare/v5.2.0...v5.3.0) - January 3, 2020
+  * Core
+    * Card
+      * Increased default `z-index` for expandable card
+    * Dialog
+      * Added support for `backdrop` parameter to be able to disable backdrop
+    * Sheet
+      * New `sheet.setSwipeSet()` method to update swipe step position if content was modified manually
+    * Tooltip
+      * New `offset` parameter to add extra offset to tooltip position
+    * Touch
+      * New `touch.activeStateOnMouseMove` boolean app parameter. If enabled it will not remove "active state" from clicked elements on mouse move
+    * Router Component
+      * Fixed issue with parsing CSS media queries in scoped styles
+      * Now it is possible to use whole app layout as a component
+        * Main app component can be specified in app `component` or `componentUrl` parameter
+        * `app.rootComponent` now refers to main app component instance
+        * If main app component is used, then `$root` in components refers to main app component instance
+    * Minor fixes
+
+# [v5.2.0](https://github.com/framework7io/framework7/compare/v5.1.3...v5.2.0) - December 8, 2019
+  * Core
+    * Accordion
+      * It is now possible to use accordion chevron on opposite side (on left in LTR) by adding `accordion-opposite` class to accordion list
+    * Calendar
+      * Fixed issue when custom `dateFormat` parsed twice (#3434)
+      * Added custom time tokens support to `dateFormat` when  `timePicker` is enabled: `HH`, `H`, `hh`, `h`, `:mm`, `:m`, `:ss`, `:s`, `A`, `a` (#3439)
+    * Dialog
+      * New `app.dialog.autoFocus` boolean parameter to auto focus predefined dialog inputs on open (valid for predefined Prompt, Login and Password dialogs). Enabled by default
+      * Added hover and pressed state for dialog buttons in Aurora theme
+    * Panel
+      * All panel instance events now have Panel instance as argument (#3404)
+    * Photo Browser
+      * Size navbar after updating count text (`1 of 4`) (#3420)
+    * Router Component
+      * Fixed issue when calling `$setState` recursively didn't work as expected (#3421)
+    * Smart Select
+      * Fixed issue calling scrollToSelectedItem caused error when there were no any items (#3412)
+    * Sortable
+      * It is now possible to make sortable handler appear on opposite side (on left in LTR) adding `sortable-opposite` class to sortable list
+  * Phenome
+    * Added lock to not throw and error and ignore further attempts to init Framework7 (for example when App component unmounted and mounted again)
+    * List
+      * New boolean `sortableOpposite` prop to render sortable handler on opposite side
+      * New boolean `accordionOpposite` prop to render accordion checron icon on opposite side
+    * Navbar
+      * Fixed issue when `no-shadow` and `no-hairline` props didn't have expected effect (#3436)
+      * Fixed issue when it was loosing required position classes in Master Detail layout
+  * Minor fixes
+
+# [v5.1.3](https://github.com/framework7io/framework7/compare/v5.1.2...v5.1.3) - November 17, 2019
+  * Core
+    * Fixed issue with setting wrong class on page
+
+# [v5.1.2](https://github.com/framework7io/framework7/compare/v5.1.1...v5.1.2) - November 17, 2019
+  * Core
+    * Fixed issue when `.once` could be called more than once (#3322)
+    * Navbar
+      * Fixed issue when `scrollTopOnTitleClick` didn't work in iOS theme
+    * Swiper - updated to latest 5.2.1
+      * Core
+        * New loop events `beforeLoopFix` and `loopFix`
+        * New parameter `updateOnWindowResize` (by default `true`) that will update/recalc swiper on window resize/orientationchange
+      * Mousewheel
+        * Fixed scroll wheel unwanted frozen effect (#3328)
+      * Thumbs
+        * New `multipleActiveThumbs` (by default `true`) option to control whether multiple thumbnail slides may get activated or not.
+  * Phenome
+    * Navbar
+      * Fixed issue when dynamically updating its classes/props could break its layout
+  * Minor fixes
 
 # [v5.1.1](https://github.com/framework7io/framework7/compare/v5.1.0...v5.1.1) - November 3, 2019
   * Core
@@ -1286,7 +1445,7 @@
   * Phenome
     * Fixed `TypeError` error in `ActionsGroup` component
 
-# [v3.0.0](https://github.com/framework7io/framework7/compare/v3.0.0-beta.19...v3.0.0) - July 5, 2018 🎉 
+# [v3.0.0](https://github.com/framework7io/framework7/compare/v3.0.0-beta.19...v3.0.0) - July 5, 2018 🎉
 
 # [v3.0.0-beta.19](https://github.com/framework7io/framework7/compare/v3.0.0-beta.18...v3.0.0-beta.19) - July 3, 2018
   * Core
@@ -1666,7 +1825,7 @@
   * Router
     * `async` route support for routable tabs
     * `async` route support for routable modals
-  * Virutal List
+  * Virtual List
     * New `ul` and `createUl` parameters. When disabled then VL can be used with any elements not expecting the list only
   * Dialog
     * New `app.destroyPredefinedDialogs` parameter to automatically destroy predefined dialogs like Alert, Confirm, Prompt, etc.

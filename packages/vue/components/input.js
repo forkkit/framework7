@@ -278,7 +278,6 @@ export default {
         'input-dropdown': dropdown === 'auto' ? type === 'select' : dropdown
       }, Mixins.colorClasses(props));
       return _h('div', {
-        ref: 'wrapEl',
         class: wrapClasses,
         style: style,
         attrs: {

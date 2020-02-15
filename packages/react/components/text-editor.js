@@ -85,7 +85,6 @@ class F7TextEditor extends React.Component {
     const {
       mode,
       value,
-      palceholder,
       buttons,
       customButtons,
       dividers,
@@ -98,7 +97,6 @@ class F7TextEditor extends React.Component {
       el: this.refs.el,
       mode,
       value,
-      palceholder,
       buttons,
       customButtons,
       dividers,

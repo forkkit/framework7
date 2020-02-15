@@ -23,6 +23,7 @@ export default {
     href: [Boolean, String],
     target: String,
     tooltip: String,
+    tooltipTrigger: String,
     ...Mixins.colorProps,
     ...Mixins.linkRouterProps,
     ...Mixins.linkActionsProps,
@@ -101,6 +102,7 @@ export default {
         self.f7Tooltip = self.$f7.tooltip.create({
           targetEl: self.refs.el,
           text: newText,
+          trigger: self.props.tooltipTrigger,
         });
         return;
       }
@@ -109,12 +111,12 @@ export default {
     },
   },
   componentDidCreate() {
-    Utils.bindMethods(this, ['onClick'])
+    Utils.bindMethods(this, ['onClick']);
   },
   componentDidMount() {
     const self = this;
     const linkEl = self.refs.linkEl;
-    const { routeProps, tooltip } = self.props;
+    const { routeProps, tooltip, tooltipTrigger } = self.props;
     if (routeProps) {
       linkEl.f7RouteProps = routeProps;
     }
@@ -124,6 +126,7 @@ export default {
         self.f7Tooltip = f7.tooltip.create({
           targetEl: linkEl,
           text: tooltip,
+          trigger: tooltipTrigger,
         });
       }
     });

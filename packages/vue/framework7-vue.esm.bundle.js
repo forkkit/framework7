@@ -1,13 +1,13 @@
 /**
- * Framework7 Vue 5.1.1
+ * Framework7 Vue 5.4.1
  * Build full featured iOS & Android apps using Framework7 & Vue
- * http://framework7.io/vue/
+ * https://framework7.io/vue/
  *
- * Copyright 2014-2019 Vladimir Kharlampidi
+ * Copyright 2014-2020 Vladimir Kharlampidi
  *
  * Released under the MIT License
  *
- * Released on: November 3, 2019
+ * Released on: February 8, 2020
  */
 import Vue from 'vue';
 import f7AccordionContent from './components/accordion-content';
@@ -123,7 +123,8 @@ const Plugin = {
     f7.Framework7 = Framework7;
     f7.events = new Framework7.Events();
 
-    const Extend = params.Vue || Vue; // eslint-disable-line
+    // eslint-disable-next-line
+    const Extend = params.Vue || Vue;
 
     Vue.component('f7-accordion-content', f7AccordionContent);
     Vue.component('f7-accordion-item', f7AccordionItem);
@@ -217,12 +218,13 @@ const Plugin = {
     Vue.component('f7-view', f7View);
     Vue.component('f7-views', f7Views);
 
-    // Define protos
+    // DEFINE_INSTANCE_PROTOS_START
     Object.defineProperty(Extend.prototype, '$f7', {
       get() {
         return f7.instance;
       },
     });
+    // DEFINE_INSTANCE_PROTOS_END
 
     const { theme } = params;
     if (theme === 'md') f7Theme.md = true;
@@ -238,6 +240,8 @@ const Plugin = {
       f7Theme.md = f7.instance.theme === 'md';
       f7Theme.aurora = f7.instance.theme === 'aurora';
     });
+
+    // DEFINE_PROTOS_START
     Object.defineProperty(Extend.prototype, '$theme', {
       get() {
         return {
@@ -247,7 +251,6 @@ const Plugin = {
         };
       },
     });
-
 
     Extend.prototype.Dom7 = Framework7.$;
     Extend.prototype.$$ = Framework7.$;
@@ -313,6 +316,7 @@ const Plugin = {
         self._f7router = value;
       },
     });
+    // DEFINE_PROTOS_END
 
     // Extend F7 Router
     Framework7.Router.use(componentsRouter);

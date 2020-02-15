@@ -17,6 +17,7 @@ declare namespace F7Card {
     hideNavbarOnOpen? : boolean
     hideToolbarOnOpen? : boolean
     hideStatusbarOnOpen? : boolean
+    scrollableEl? : string
     swipeToClose? : boolean
     closeByBackdropClick? : boolean
     backdrop? : boolean

@@ -33,7 +33,6 @@ export default {
 
     if (inner) {
       innerEl = _h('div', {
-        ref: 'inner',
         class: Utils.classNames('appbar-inner', innerClass, innerClassName)
       }, [this.$slots['default']]);
     }
@@ -43,7 +42,6 @@ export default {
       'no-hairline': noHairline
     }, Mixins.colorClasses(props));
     return _h('div', {
-      ref: 'el',
       style: style,
       class: classes,
       attrs: {

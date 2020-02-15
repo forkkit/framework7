@@ -1,13 +1,13 @@
 /**
- * Framework7 5.1.1
+ * Framework7 5.4.1
  * Full featured mobile HTML framework for building iOS & Android apps
- * http://framework7.io/
+ * https://framework7.io/
  *
- * Copyright 2014-2019 Vladimir Kharlampidi
+ * Copyright 2014-2020 Vladimir Kharlampidi
  *
  * Released under the MIT License
  *
- * Released on: November 3, 2019
+ * Released on: February 8, 2020
  */
 
 /*====================
@@ -4273,6 +4273,14 @@ html.device-full-viewport body {
   --f7-list-button-pressed-bg-color: rgba(255, 255, 255, 0.05);
   --f7-list-button-hover-bg-color: rgba(255, 255, 255, 0.03);
 }
+:root {
+  --f7-list-chevron-icon-left: 'chevron_left';
+  --f7-list-chevron-icon-right: 'chevron_right';
+}
+.aurora {
+  --f7-list-chevron-icon-left: 'chevron_left_aurora';
+  --f7-list-chevron-icon-right: 'chevron_right_aurora';
+}
 .list {
   position: relative;
   z-index: 1;
@@ -4755,8 +4763,7 @@ li.media-item .item-link.chevron-center .item-inner:before {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   -moz-osx-font-smoothing: grayscale;
-  -moz-font-feature-settings: "liga";
-       font-feature-settings: "liga";
+  font-feature-settings: "liga";
   text-align: center;
   display: block;
   width: 100%;
@@ -4772,7 +4779,7 @@ li.media-item .item-link.chevron-center .item-inner:before {
   color: var(--f7-list-chevron-icon-color);
   pointer-events: none;
   left: calc(var(--f7-list-item-padding-horizontal) + var(--f7-safe-area-left));
-  content: 'chevron_left';
+  content: var(--f7-list-chevron-icon-left);
 }
 .media-list.chevron-center .item-title-row:before,
 .media-list .chevron-center .item-title-row:before,
@@ -5058,18 +5065,6 @@ li.list-group-title,
 }
 .aurora .list .item-media {
   min-width: 18px;
-}
-.aurora .list .item-link .item-inner:before,
-.aurora .links-list a:before,
-.aurora .media-list .item-link .item-title-row:before,
-.aurora li.media-item .item-link .item-title-row:before,
-.aurora .media-list.chevron-center .item-link .item-inner:before,
-.aurora .media-list .chevron-center .item-link .item-inner:before,
-.aurora .media-list .item-link.chevron-center .item-inner:before,
-.aurora li.media-item.chevron-center .item-link .item-inner:before,
-.aurora li.media-item .chevron-center .item-link .item-inner:before,
-.aurora li.media-item .item-link.chevron-center .item-inner:before {
-  content: 'chevron_left_aurora';
 }
 .aurora .links-list a,
 .aurora .list .item-link,
@@ -5620,8 +5615,7 @@ i.icon {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   -moz-osx-font-smoothing: grayscale;
-  -moz-font-feature-settings: "liga";
-       font-feature-settings: "liga";
+  font-feature-settings: "liga";
   text-align: center;
   display: block;
   width: 100%;

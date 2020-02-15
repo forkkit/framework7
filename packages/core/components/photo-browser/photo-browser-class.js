@@ -24,7 +24,6 @@ class PhotoBrowser extends Framework7Class {
       opened: false,
       activeIndex: pb.params.swiper.initialSlide,
       url: pb.params.url,
-      view: pb.params.view || app.views.main,
       swipeToClose: {
         allow: true,
         isTouched: false,
@@ -42,6 +41,11 @@ class PhotoBrowser extends Framework7Class {
 
     // Init
     pb.init();
+  }
+
+  get view() {
+    const { params, app } = this;
+    return params.view || app.views.main;
   }
 
   onSlideChange(swiper) {
@@ -66,8 +70,9 @@ class PhotoBrowser extends Framework7Class {
 
     let $currentEl = pb.$el.find('.photo-browser-current');
     let $totalEl = pb.$el.find('.photo-browser-total');
+    let navbarEl;
     if (pb.params.type === 'page' && pb.params.navbar && $currentEl.length === 0 && pb.app.theme === 'ios') {
-      const navbarEl = pb.app.navbar.getElByPage(pb.$el);
+      navbarEl = pb.app.navbar.getElByPage(pb.$el);
       if (navbarEl) {
         $currentEl = $(navbarEl).find('.photo-browser-current');
         $totalEl = $(navbarEl).find('.photo-browser-total');
@@ -76,6 +81,10 @@ class PhotoBrowser extends Framework7Class {
     if ($currentEl.length && $totalEl.length) {
       $currentEl.text(current);
       $totalEl.text(total);
+      if (!navbarEl) navbarEl = $currentEl.parents('.navbar')[0];
+      if (navbarEl) {
+        pb.app.navbar.size(navbarEl);
+      }
     }
 
     // Update captions
@@ -541,7 +550,7 @@ class PhotoBrowser extends Framework7Class {
       },
     };
 
-    if (pb.params.routableModals) {
+    if (pb.params.routableModals && pb.view) {
       pb.view.router.navigate({
         url: pb.url,
         route: {
@@ -580,7 +589,7 @@ class PhotoBrowser extends Framework7Class {
       },
     };
 
-    if (pb.params.routableModals) {
+    if (pb.params.routableModals && pb.view) {
       pb.view.router.navigate({
         url: pb.url,
         route: {
@@ -655,8 +664,8 @@ class PhotoBrowser extends Framework7Class {
   close() {
     const pb = this;
     if (!pb.opened) return pb;
-    if (pb.params.routableModals || pb.openedIn === 'page') {
-      if (pb.view) pb.view.router.back();
+    if ((pb.params.routableModals && pb.view) || pb.openedIn === 'page') {
+      pb.view.router.back();
     } else {
       pb.modal.once('modalClosed', () => {
         Utils.nextTick(() => {

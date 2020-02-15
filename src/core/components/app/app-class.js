@@ -38,6 +38,8 @@ class Framework7 extends Framework7Class {
       autoDarkTheme: false,
       iosTranslucentBars: true,
       iosTranslucentModals: true,
+      component: undefined,
+      componentUrl: undefined,
     };
 
     // Extend defaults with modules params
@@ -107,6 +109,7 @@ class Framework7 extends Framework7Class {
         html.classList.remove('theme-dark');
       }
     };
+
     // Init
     if (app.params.init) {
       if (Device.cordova && app.params.initOnDeviceReady) {
@@ -117,6 +120,7 @@ class Framework7 extends Framework7Class {
         app.init();
       }
     }
+
     // Return app instance
     return app;
   }
@@ -166,7 +170,24 @@ class Framework7 extends Framework7Class {
     if (app.mq.light) app.mq.light.removeListener(app.colorSchemeListener);
   }
 
-  init() {
+  initAppComponent(callback) {
+    const app = this;
+    app.router.componentLoader(
+      app.params.component,
+      app.params.componentUrl,
+      { componentOptions: { el: app.root[0] } },
+      (el) => {
+        app.root = $(el);
+        app.root[0].f7 = app;
+        app.rootComponent = el.f7Component;
+        if (callback) callback();
+      },
+      () => {}
+    );
+  }
+
+  // eslint-disable-next-line
+  _init() {
     const app = this;
     if (app.initialized) return app;
 
@@ -217,6 +238,17 @@ class Framework7 extends Framework7Class {
     app.emit('init');
 
     return app;
+  }
+
+  init() {
+    const app = this;
+    if (app.params.component || app.params.componentUrl) {
+      app.initAppComponent(() => {
+        app._init(); // eslint-disable-line
+      });
+    } else {
+      app._init(); // eslint-disable-line
+    }
   }
 
   // eslint-disable-next-line

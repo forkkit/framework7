@@ -316,9 +316,6 @@ class F7Input extends React.Component {
       }, Mixins.colorClasses(props));
       return React.createElement('div', {
         id: id,
-        ref: __reactNode => {
-          this.__reactRefs['wrapEl'] = __reactNode;
-        },
         className: wrapClasses,
         style: style
       }, inputEl, errorMessage && errorMessageForce && React.createElement('div', {

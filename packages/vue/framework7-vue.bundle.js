@@ -1,24 +1,28 @@
 /**
- * Framework7 Vue 5.1.1
+ * Framework7 Vue 5.4.1
  * Build full featured iOS & Android apps using Framework7 & Vue
- * http://framework7.io/vue/
+ * https://framework7.io/vue/
  *
- * Copyright 2014-2019 Vladimir Kharlampidi
+ * Copyright 2014-2020 Vladimir Kharlampidi
  *
  * Released under the MIT License
  *
- * Released on: November 3, 2019
+ * Released on: February 8, 2020
  */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('vue')) :
   typeof define === 'function' && define.amd ? define(['vue'], factory) :
   (global = global || self, global.Framework7Vue = factory(global.Vue));
-}(this, function (Vue) { 'use strict';
+}(this, (function (Vue) { 'use strict';
 
   Vue = Vue && Vue.hasOwnProperty('default') ? Vue['default'] : Vue;
 
   var Utils = {
+    text: function text(text$1) {
+      if (typeof text$1 === 'undefined' || text$1 === null) { return ''; }
+      return text$1;
+    },
     noUndefinedProps: function noUndefinedProps(obj) {
       var o = {};
       Object.keys(obj).forEach(function (key) {
@@ -568,7 +572,8 @@
 
   var f7Accordion = {
     props: Object.assign({
-      id: [String, Number]
+      id: [String, Number],
+      accordionOpposite: Boolean
     }, Mixins.colorProps),
     name: 'f7-accordion',
 
@@ -578,7 +583,8 @@
       var className = props.className;
       var id = props.id;
       var style = props.style;
-      var classes = Utils.classNames(className, 'accordion-list', Mixins.colorClasses(props));
+      var accordionOpposite = props.accordionOpposite;
+      var classes = Utils.classNames(className, 'accordion-list', accordionOpposite && 'accordion-opposite', Mixins.colorClasses(props));
       return _h('div', {
         style: style,
         class: classes,
@@ -1084,6 +1090,7 @@
         parentEl.style.height = '100%';
       }
 
+      if (f7.instance) { return; }
       f7.init(el, params, routes);
     },
 
@@ -1125,7 +1132,6 @@
 
       if (inner) {
         innerEl = _h('div', {
-          ref: 'inner',
           class: Utils.classNames('appbar-inner', innerClass, innerClassName)
         }, [this.$slots['default']]);
       }
@@ -1135,7 +1141,6 @@
         'no-hairline': noHairline
       }, Mixins.colorClasses(props));
       return _h('div', {
-        ref: 'el',
         style: style,
         class: classes,
         attrs: {
@@ -1294,6 +1299,7 @@
       tab: Boolean,
       tabActive: Boolean,
       accordionList: Boolean,
+      accordionOpposite: Boolean,
       noHairlines: Boolean,
       noHairlinesMd: Boolean,
       noHairlinesIos: Boolean,
@@ -1336,6 +1342,7 @@
       var xlargeInset = props.xlargeInset;
       var strong = props.strong;
       var accordionList = props.accordionList;
+      var accordionOpposite = props.accordionOpposite;
       var tabs = props.tabs;
       var tab = props.tab;
       var tabActive = props.tabActive;
@@ -1354,6 +1361,7 @@
         'xlarge-inset': xlargeInset,
         'block-strong': strong,
         'accordion-list': accordionList,
+        'accordion-opposite': accordionOpposite,
         tabs: tabs,
         tab: tab,
         'tab-active': tabActive,
@@ -1410,6 +1418,7 @@
       aurora: String,
       md: String,
       tooltip: String,
+      tooltipTrigger: String,
       size: [String, Number]
     }, Mixins.colorProps),
 
@@ -1480,7 +1489,8 @@
         if (newText && !self.f7Tooltip && self.$f7) {
           self.f7Tooltip = self.$f7.tooltip.create({
             targetEl: self.$refs.el,
-            text: newText
+            text: newText,
+            trigger: self.props.tooltipTrigger
           });
           return;
         }
@@ -1496,11 +1506,13 @@
       if (!el) { return; }
       var ref = self.props;
       var tooltip = ref.tooltip;
+      var tooltipTrigger = ref.tooltipTrigger;
       if (!tooltip) { return; }
       self.$f7ready(function (f7) {
         self.f7Tooltip = f7.tooltip.create({
           targetEl: el,
-          text: tooltip
+          text: tooltip,
+          trigger: tooltipTrigger
         });
       });
     },
@@ -1670,7 +1682,8 @@
       outlineAurora: Boolean,
       active: Boolean,
       disabled: Boolean,
-      tooltip: String
+      tooltip: String,
+      tooltipTrigger: String
     }, Mixins.colorProps, {}, Mixins.linkIconProps, {}, Mixins.linkRouterProps, {}, Mixins.linkActionsProps),
 
     render: function render() {
@@ -1838,7 +1851,8 @@
         if (newText && !self.f7Tooltip && self.$f7) {
           self.f7Tooltip = self.$f7.tooltip.create({
             targetEl: self.$refs.el,
-            text: newText
+            text: newText,
+            trigger: self.props.tooltipTrigger
           });
           return;
         }
@@ -1858,6 +1872,7 @@
       el.addEventListener('click', self.onClick);
       var ref = self.props;
       var tooltip = ref.tooltip;
+      var tooltipTrigger = ref.tooltipTrigger;
       var routeProps = ref.routeProps;
 
       if (routeProps) {
@@ -1868,7 +1883,8 @@
       self.$f7ready(function (f7) {
         self.f7Tooltip = f7.tooltip.create({
           targetEl: el,
-          text: tooltip
+          text: tooltip,
+          trigger: tooltipTrigger
         });
       });
     },
@@ -2023,6 +2039,10 @@
         type: Boolean,
         default: undefined
       },
+      scrollableEl: {
+        type: String,
+        default: undefined
+      },
       swipeToClose: {
         type: Boolean,
         default: undefined
@@ -2113,6 +2133,7 @@
       var hideNavbarOnOpen = props.hideNavbarOnOpen;
       var hideToolbarOnOpen = props.hideToolbarOnOpen;
       var hideStatusbarOnOpen = props.hideStatusbarOnOpen;
+      var scrollableEl = props.scrollableEl;
       var swipeToClose = props.swipeToClose;
       var closeByBackdropClick = props.closeByBackdropClick;
       var backdrop = props.backdrop;
@@ -2156,6 +2177,7 @@
           'data-hide-navbar-on-open': typeof hideNavbarOnOpen === 'undefined' ? hideNavbarOnOpen : hideNavbarOnOpen.toString(),
           'data-hide-toolbar-on-open': typeof hideToolbarOnOpen === 'undefined' ? hideToolbarOnOpen : hideToolbarOnOpen.toString(),
           'data-hide-statusbar-on-open': typeof hideStatusbarOnOpen === 'undefined' ? hideStatusbarOnOpen : hideStatusbarOnOpen.toString(),
+          'data-scrollable-el': scrollableEl,
           'data-swipe-to-close': typeof swipeToClose === 'undefined' ? swipeToClose : swipeToClose.toString(),
           'data-close-by-backdrop-click': typeof closeByBackdropClick === 'undefined' ? closeByBackdropClick : closeByBackdropClick.toString(),
           'data-backdrop': typeof backdrop === 'undefined' ? backdrop : backdrop.toString(),
@@ -2347,7 +2369,7 @@
       mediaBgColor: String,
       mediaTextColor: String,
       outline: Boolean
-    }, Mixins.colorProps),
+    }, Mixins.colorProps, {}, Mixins.linkIconProps),
 
     render: function render() {
       var _h = this.$createElement;
@@ -2362,15 +2384,39 @@
       var mediaTextColor = props.mediaTextColor;
       var mediaBgColor = props.mediaBgColor;
       var outline = props.outline;
+      var icon = props.icon;
+      var iconMaterial = props.iconMaterial;
+      var iconF7 = props.iconF7;
+      var iconMd = props.iconMd;
+      var iconIos = props.iconIos;
+      var iconAurora = props.iconAurora;
+      var iconColor = props.iconColor;
+      var iconSize = props.iconSize;
+      var iconEl;
       var mediaEl;
       var labelEl;
       var deleteEl;
 
-      if (media || self.$slots && self.$slots.media) {
+      if (icon || iconMaterial || iconF7 || iconMd || iconIos || iconAurora) {
+        iconEl = _h(f7Icon, {
+          attrs: {
+            material: iconMaterial,
+            f7: iconF7,
+            icon: icon,
+            md: iconMd,
+            ios: iconIos,
+            aurora: iconAurora,
+            color: iconColor,
+            size: iconSize
+          }
+        });
+      }
+
+      if (media || iconEl || self.$slots && self.$slots.media) {
         var mediaClasses = Utils.classNames('chip-media', mediaTextColor && ("text-color-" + mediaTextColor), mediaBgColor && ("bg-color-" + mediaBgColor));
         mediaEl = _h('div', {
           class: mediaClasses
-        }, [media || this.$slots['media']]);
+        }, [iconEl, media, this.$slots['media']]);
       }
 
       if (text || self.$slots && self.$slots.text) {
@@ -2572,7 +2618,8 @@
       fabClose: Boolean,
       label: String,
       target: String,
-      tooltip: String
+      tooltip: String,
+      tooltipTrigger: String
     }, Mixins.colorProps),
 
     render: function render() {
@@ -2616,11 +2663,13 @@
       self.$refs.el.addEventListener('click', self.onClick);
       var ref = self.props;
       var tooltip = ref.tooltip;
+      var tooltipTrigger = ref.tooltipTrigger;
       if (!tooltip) { return; }
       self.$f7ready(function (f7) {
         self.f7Tooltip = f7.tooltip.create({
           targetEl: self.$refs.el,
-          text: tooltip
+          text: tooltip,
+          trigger: tooltipTrigger
         });
       });
     },
@@ -2663,7 +2712,8 @@
         if (newText && !self.f7Tooltip && self.$f7) {
           self.f7Tooltip = self.$f7.tooltip.create({
             targetEl: self.$refs.el,
-            text: newText
+            text: newText,
+            trigger: self.props.tooltipTrigger
           });
           return;
         }
@@ -2727,7 +2777,8 @@
         type: String,
         default: 'right-bottom'
       },
-      tooltip: String
+      tooltip: String,
+      tooltipTrigger: String
     }, Mixins.colorProps),
 
     render: function render() {
@@ -2813,7 +2864,8 @@
         if (newText && !self.f7Tooltip && self.$f7) {
           self.f7Tooltip = self.$f7.tooltip.create({
             targetEl: self.$refs.el,
-            text: newText
+            text: newText,
+            trigger: self.props.tooltipTrigger
           });
           return;
         }
@@ -2836,11 +2888,13 @@
 
       var ref = self.props;
       var tooltip = ref.tooltip;
+      var tooltipTrigger = ref.tooltipTrigger;
       if (!tooltip) { return; }
       self.$f7ready(function (f7) {
         self.f7Tooltip = f7.tooltip.create({
           targetEl: self.$refs.el,
-          text: tooltip
+          text: tooltip,
+          trigger: tooltipTrigger
         });
       });
     },
@@ -3139,8 +3193,7 @@
           el: self.$refs.el,
           on: {
             change: function change(toggle) {
-              var checked = toggle.checked;
-              self.dispatchEvent('toggle:change toggleChange', checked);
+              self.dispatchEvent('toggle:change toggleChange', toggle.checked);
             }
 
           }
@@ -3431,7 +3484,6 @@
       var props = this.props;
       var mode = props.mode;
       var value = props.value;
-      var palceholder = props.palceholder;
       var buttons = props.buttons;
       var customButtons = props.customButtons;
       var dividers = props.dividers;
@@ -3443,7 +3495,6 @@
         el: this.$refs.el,
         mode: mode,
         value: value,
-        palceholder: palceholder,
         buttons: buttons,
         customButtons: customButtons,
         dividers: dividers,
@@ -3826,7 +3877,6 @@
           'input-dropdown': dropdown === 'auto' ? type === 'select' : dropdown
         }, Mixins.colorClasses(props));
         return _h('div', {
-          ref: 'wrapEl',
           class: wrapClasses,
           style: style,
           attrs: {
@@ -4146,6 +4196,7 @@
       },
       target: String,
       tooltip: String,
+      tooltipTrigger: String,
       smartSelect: Boolean,
       smartSelectParams: Object
     }, Mixins.colorProps, {}, Mixins.linkIconProps, {}, Mixins.linkRouterProps, {}, Mixins.linkActionsProps),
@@ -4254,7 +4305,8 @@
         if (newText && !self.f7Tooltip && self.$f7) {
           self.f7Tooltip = self.$f7.tooltip.create({
             targetEl: self.$refs.el,
-            text: newText
+            text: newText,
+            trigger: self.props.tooltipTrigger
           });
           return;
         }
@@ -4276,6 +4328,7 @@
       var tabbarLabel = ref.tabbarLabel;
       var tabLink = ref.tabLink;
       var tooltip = ref.tooltip;
+      var tooltipTrigger = ref.tooltipTrigger;
       var smartSelect = ref.smartSelect;
       var smartSelectParams = ref.smartSelectParams;
       var routeProps = ref.routeProps;
@@ -4300,7 +4353,8 @@
         if (tooltip) {
           self.f7Tooltip = f7.tooltip.create({
             targetEl: el,
-            text: tooltip
+            text: tooltip,
+            trigger: tooltipTrigger
           });
         }
       });
@@ -4403,7 +4457,8 @@
       link: [Boolean, String],
       href: [Boolean, String],
       target: String,
-      tooltip: String
+      tooltip: String,
+      tooltipTrigger: String
     }, Mixins.colorProps, {}, Mixins.linkRouterProps, {}, Mixins.linkActionsProps),
 
     render: function render() {
@@ -4474,7 +4529,8 @@
         if (newText && !self.f7Tooltip && self.$f7) {
           self.f7Tooltip = self.$f7.tooltip.create({
             targetEl: self.$refs.el,
-            text: newText
+            text: newText,
+            trigger: self.props.tooltipTrigger
           });
           return;
         }
@@ -4494,6 +4550,7 @@
       var ref = self.props;
       var routeProps = ref.routeProps;
       var tooltip = ref.tooltip;
+      var tooltipTrigger = ref.tooltipTrigger;
 
       if (routeProps) {
         linkEl.f7RouteProps = routeProps;
@@ -4504,7 +4561,8 @@
         if (tooltip) {
           self.f7Tooltip = f7.tooltip.create({
             targetEl: linkEl,
-            text: tooltip
+            text: tooltip,
+            trigger: tooltipTrigger
           });
         }
       });
@@ -4555,6 +4613,7 @@
       id: [String, Number],
       mediaList: Boolean,
       sortable: Boolean,
+      sortableOpposite: Boolean,
       sortableTapHold: Boolean,
       sortableMoveElements: {
         type: Boolean,
@@ -4571,12 +4630,14 @@
       var style = props.style;
       var mediaList = props.mediaList;
       var sortable = props.sortable;
+      var sortableOpposite = props.sortableOpposite;
       var sortableTapHold = props.sortableTapHold;
       var sortableMoveElements = props.sortableMoveElements;
       var classes = Utils.classNames(className, 'list-group', {
         'media-list': mediaList,
         sortable: sortable,
-        'sortable-tap-hold': sortableTapHold
+        'sortable-tap-hold': sortableTapHold,
+        'sortable-opposite': sortableOpposite
       }, Mixins.colorClasses(props));
       return _h('div', {
         style: style,
@@ -5424,13 +5485,19 @@
       var inputIconEl;
       var headerEl;
       var footerEl;
-      var slots = self.$slots.default;
+      var slotsDefault = self.$slots.default;
       var flattenSlots = [];
 
-      if (slots && slots.length) {
-        slots.forEach(function (slot) {
+      if (slotsDefault && slotsDefault.length) {
+        slotsDefault.forEach(function (slot) {
           if (Array.isArray(slot)) { flattenSlots.push.apply(flattenSlots, slot); }else { flattenSlots.push(slot); }
         });
+      }
+
+      var passedSlotsContentStart = self.$slots['content-start'];
+
+      if (passedSlotsContentStart && passedSlotsContentStart.length) {
+        slotsContentStart.push.apply(slotsContentStart, passedSlotsContentStart);
       }
 
       flattenSlots.forEach(function (child) {
@@ -5681,6 +5748,7 @@
       header: [String, Number],
       footer: [String, Number],
       tooltip: String,
+      tooltipTrigger: String,
       link: [Boolean, String],
       target: String,
       after: [String, Number],
@@ -5693,6 +5761,10 @@
       swipeout: Boolean,
       swipeoutOpened: Boolean,
       sortable: {
+        type: Boolean,
+        default: undefined
+      },
+      sortableOpposite: {
         type: Boolean,
         default: undefined
       },
@@ -5722,6 +5794,7 @@
         return {
           isMedia: props.mediaItem || props.mediaList,
           isSortable: props.sortable,
+          isSortableOpposite: props.sortableOpposite,
           isSimple: false
         };
       })();
@@ -5771,11 +5844,13 @@
       var required = props.required;
       var disabled = props.disabled;
       var sortable = props.sortable;
+      var sortableOpposite = props.sortableOpposite;
       var noChevron = props.noChevron;
       var chevronCenter = props.chevronCenter;
       var virtualListIndex = props.virtualListIndex;
       var isMedia = mediaItem || mediaList || self.state.isMedia;
       var isSortable = sortable || self.state.isSortable;
+      var isSortableOpposite = isSortable && (sortableOpposite || self.state.isSortableOpposite);
       var isSimple = self.state.isSimple;
 
       if (!isSimple) {
@@ -5808,7 +5883,10 @@
             required: required,
             disabled: disabled
           }
-        }, [this.$slots['content-start'], this.$slots['content'], this.$slots['content-end'], this.$slots['media'], this.$slots['inner-start'], this.$slots['inner'], this.$slots['inner-end'], this.$slots['after-start'], this.$slots['after'], this.$slots['after-end'], this.$slots['header'], this.$slots['footer'], this.$slots['before-title'], this.$slots['title'], this.$slots['after-title'], this.$slots['subtitle'], this.$slots['text'], swipeout || accordionItem ? null : self.$slots.default]);
+        }, [this.$slots['content-start'], this.$slots['content'], this.$slots['content-end'], this.$slots['media'], this.$slots['inner-start'], this.$slots['inner'], this.$slots['inner-end'], this.$slots['after-start'], this.$slots['after'], this.$slots['after-end'], this.$slots['header'], this.$slots['footer'], this.$slots['before-title'], this.$slots['title'], this.$slots['after-title'], this.$slots['subtitle'], this.$slots['text'], swipeout || accordionItem ? null : self.$slots.default, isSortable && sortable !== false && isSortableOpposite && _h('div', {
+          class: 'sortable-handler',
+          slot: 'content-start'
+        })]);
 
         if (link || href || accordionItem || smartSelect) {
           var linkAttrs = Object.assign({
@@ -5874,7 +5952,7 @@
         }
       }, [this.$slots['root-start'], swipeout ? _h('div', {
         class: 'swipeout-content'
-      }, [linkItemEl]) : linkItemEl, isSortable && sortable !== false && _h('div', {
+      }, [linkItemEl]) : linkItemEl, isSortable && sortable !== false && !isSortableOpposite && _h('div', {
         class: 'sortable-handler'
       }), (swipeout || accordionItem) && self.$slots.default, this.$slots['root'], this.$slots['root-end']]);
     },
@@ -5893,7 +5971,8 @@
         if (newText && !self.f7Tooltip && self.$f7) {
           self.f7Tooltip = self.$f7.tooltip.create({
             targetEl: self.$refs.el,
-            text: newText
+            text: newText,
+            trigger: self.props.tooltipTrigger
           });
           return;
         }
@@ -5934,6 +6013,7 @@
       var smartSelectParams = ref$1.smartSelectParams;
       var routeProps = ref$1.routeProps;
       var tooltip = ref$1.tooltip;
+      var tooltipTrigger = ref$1.tooltipTrigger;
       var needsEvents = !(link || href || accordionItem || smartSelect);
 
       if (!needsEvents && linkEl) {
@@ -5950,7 +6030,8 @@
         self.setState({
           isMedia: self.$listEl.hasClass('media-list'),
           isSimple: self.$listEl.hasClass('simple-list'),
-          isSortable: self.$listEl.hasClass('sortable')
+          isSortable: self.$listEl.hasClass('sortable'),
+          isSortableOpposite: self.$listEl.hasClass('sortable-opposite')
         });
       }
 
@@ -5992,7 +6073,8 @@
         if (tooltip) {
           self.f7Tooltip = f7.tooltip.create({
             targetEl: el,
-            text: tooltip
+            text: tooltip,
+            trigger: tooltipTrigger
           });
         }
       });
@@ -6014,6 +6096,7 @@
       var isMedia = $listEl.hasClass('media-list');
       var isSimple = $listEl.hasClass('simple-list');
       var isSortable = $listEl.hasClass('sortable');
+      var isSortableOpposite = $listEl.hasClass('sortable-opposite');
 
       if (isMedia !== self.state.isMedia) {
         self.setState({
@@ -6031,6 +6114,12 @@
         self.setState({
           isSortable: isSortable
         });
+
+        if (isSortableOpposite !== self.state.isSortableOpposite) {
+          self.setState({
+            isSortableOpposite: isSortableOpposite
+          });
+        }
       }
     },
 
@@ -6223,7 +6312,9 @@
         type: Boolean,
         default: undefined
       },
+      sortableOpposite: Boolean,
       accordionList: Boolean,
+      accordionOpposite: Boolean,
       contactsList: Boolean,
       simpleList: Boolean,
       linksList: Boolean,
@@ -6317,7 +6408,9 @@
         var sortable = props.sortable;
         var sortableTapHold = props.sortableTapHold;
         var sortableEnabled = props.sortableEnabled;
+        var sortableOpposite = props.sortableOpposite;
         var accordionList = props.accordionList;
+        var accordionOpposite = props.accordionOpposite;
         var contactsList = props.contactsList;
         var virtualList = props.virtualList;
         var tab = props.tab;
@@ -6348,7 +6441,9 @@
           sortable: sortable,
           'sortable-tap-hold': sortableTapHold,
           'sortable-enabled': sortableEnabled,
+          'sortable-opposite': sortableOpposite,
           'accordion-list': accordionList,
+          'accordion-opposite': accordionOpposite,
           'contacts-list': contactsList,
           'virtual-list': virtualList,
           tab: tab,
@@ -8350,7 +8445,12 @@
         }
 
         return {
-          _theme: $f7 ? self.$theme : null
+          _theme: $f7 ? self.$theme : null,
+          routerPositionClass: '',
+          largeCollapsed: false,
+          routerNavbarRole: null,
+          routerNavbarRoleDetailRoot: false,
+          routerNavbarMasterStack: false
         };
       })();
 
@@ -8381,7 +8481,10 @@
       var large = props.large;
       var largeTransparent = props.largeTransparent;
       var titleLarge = props.titleLarge;
-      var theme = self.state.theme;
+      var ref = self.state;
+      var theme = ref._theme;
+      var routerPositionClass = ref.routerPositionClass;
+      var largeCollapsed = ref.largeCollapsed;
       var leftEl;
       var titleEl;
       var rightEl;
@@ -8389,10 +8492,17 @@
       var addLeftTitleClass = theme && theme.ios && self.$f7 && !self.$f7.params.navbar.iosCenterTitle;
       var addCenterTitleClass = theme && theme.md && self.$f7 && self.$f7.params.navbar.mdCenterTitle || theme && theme.aurora && self.$f7 && self.$f7.params.navbar.auroraCenterTitle;
       var slots = self.$slots;
-      var classes = Utils.classNames(className, 'navbar', {
+      var classes = Utils.classNames(className, 'navbar', routerPositionClass && routerPositionClass, {
         'navbar-hidden': hidden,
         'navbar-large': large,
-        'navbar-large-transparent': largeTransparent
+        'navbar-large-transparent': largeTransparent,
+        'navbar-large-collapsed': large && largeCollapsed,
+        'navbar-master': this.state.routerNavbarRole === 'master',
+        'navbar-master-detail': this.state.routerNavbarRole === 'detail',
+        'navbar-master-detail-root': this.state.routerNavbarRoleDetailRoot === true,
+        'navbar-master-stacked': this.state.routerNavbarMasterStack === true,
+        'no-shadow': noShadow,
+        'no-hairline': noHairline
       }, Mixins.colorClasses(props));
 
       if (backLink || slots['nav-left'] || slots.left) {
@@ -8436,8 +8546,6 @@
       var innerEl = _h('div', {
         class: Utils.classNames('navbar-inner', innerClass, innerClassName, {
           sliding: sliding,
-          'no-shadow': noShadow,
-          'no-hairline': noHairline,
           'navbar-inner-left-title': addLeftTitleClass,
           'navbar-inner-centered-title': addCenterTitleClass
         })
@@ -8456,7 +8564,7 @@
     },
 
     created: function created() {
-      Utils.bindMethods(this, ['onBackClick', 'onHide', 'onShow', 'onExpand', 'onCollapse']);
+      Utils.bindMethods(this, ['onBackClick', 'onHide', 'onShow', 'onExpand', 'onCollapse', 'onNavbarPosition', 'onNavbarRole', 'onNavbarMasterStack', 'onNavbarMasterUnstack']);
     },
 
     mounted: function mounted() {
@@ -8470,6 +8578,10 @@
         f7.on('navbarHide', self.onHide);
         f7.on('navbarCollapse', self.onCollapse);
         f7.on('navbarExpand', self.onExpand);
+        f7.on('navbarPosition', self.onNavbarPosition);
+        f7.on('navbarRole', self.onNavbarRole);
+        f7.on('navbarMasterStack', self.onNavbarMasterStack);
+        f7.on('navbarMasterUnstack', self.onNavbarMasterUnstack);
       });
     },
 
@@ -8490,6 +8602,10 @@
       f7.off('navbarHide', self.onHide);
       f7.off('navbarCollapse', self.onCollapse);
       f7.off('navbarExpand', self.onExpand);
+      f7.off('navbarPosition', self.onNavbarPosition);
+      f7.off('navbarRole', self.onNavbarRole);
+      f7.off('navbarMasterStack', self.onNavbarMasterStack);
+      f7.off('navbarMasterUnstack', self.onNavbarMasterUnstack);
       self.eventTargetEl = null;
       delete self.eventTargetEl;
     },
@@ -8507,12 +8623,47 @@
 
       onExpand: function onExpand(navbarEl) {
         if (this.eventTargetEl !== navbarEl) { return; }
+        this.setState({
+          largeCollapsed: false
+        });
         this.dispatchEvent('navbar:expand navbarExpand');
       },
 
       onCollapse: function onCollapse(navbarEl) {
         if (this.eventTargetEl !== navbarEl) { return; }
+        this.setState({
+          largeCollapsed: true
+        });
         this.dispatchEvent('navbar:collapse navbarCollapse');
+      },
+
+      onNavbarPosition: function onNavbarPosition(navbarEl, position) {
+        if (this.eventTargetEl !== navbarEl) { return; }
+        this.setState({
+          routerPositionClass: position ? ("navbar-" + position) : ''
+        });
+      },
+
+      onNavbarRole: function onNavbarRole(navbarEl, rolesData) {
+        if (this.eventTargetEl !== navbarEl) { return; }
+        this.setState({
+          routerNavbarRole: rolesData.role,
+          routerNavbarRoleDetailRoot: rolesData.detailRoot
+        });
+      },
+
+      onNavbarMasterStack: function onNavbarMasterStack(navbarEl) {
+        if (this.eventTargetEl !== navbarEl) { return; }
+        this.setState({
+          routerNavbarMasterStack: true
+        });
+      },
+
+      onNavbarMasterUnstack: function onNavbarMasterUnstack(navbarEl) {
+        if (this.eventTargetEl !== navbarEl) { return; }
+        this.setState({
+          routerNavbarMasterStack: false
+        });
       },
 
       hide: function hide(animate) {
@@ -8659,6 +8810,10 @@
         }, [_h('span', {
           class: 'preloader-inner-circle'
         })]);
+      } else if (!theme) {
+        innerEl = _h('span', {
+          class: 'preloader-inner'
+        });
       }
 
       var classes = Utils.classNames(className, 'preloader', Mixins.colorClasses(props));
@@ -10671,7 +10826,7 @@
 
       toggle: function toggle() {
         if (!this.f7Searchbar) { return undefined; }
-        return this.toggle.disable();
+        return this.f7Searchbar.toggle();
       },
 
       clear: function clear() {
@@ -12827,7 +12982,7 @@
         if (!$pageEl) { return; }
         var router = this;
         var f7Page;
-        if ('length' in $pageEl) { f7Page = $pageEl[0].f7Page; }
+        if ('length' in $pageEl && $pageEl[0]) { f7Page = $pageEl[0].f7Page; }
         else { f7Page = $pageEl.f7Page; }
         if (f7Page && f7Page.route && f7Page.route.route && f7Page.route.route.keepAlive) {
           router.app.$($pageEl).remove();
@@ -12991,15 +13146,15 @@
   };
 
   /**
-   * Framework7 Vue 5.1.1
+   * Framework7 Vue 5.4.1
    * Build full featured iOS & Android apps using Framework7 & Vue
-   * http://framework7.io/vue/
+   * https://framework7.io/vue/
    *
-   * Copyright 2014-2019 Vladimir Kharlampidi
+   * Copyright 2014-2020 Vladimir Kharlampidi
    *
    * Released under the MIT License
    *
-   * Released on: November 3, 2019
+   * Released on: February 8, 2020
    */
 
   function f7ready(callback) {
@@ -13021,7 +13176,8 @@
       f7.Framework7 = Framework7;
       f7.events = new Framework7.Events();
 
-      var Extend = params.Vue || Vue; // eslint-disable-line
+      // eslint-disable-next-line
+      var Extend = params.Vue || Vue;
 
       Vue.component('f7-accordion-content', f7AccordionContent);
       Vue.component('f7-accordion-item', f7AccordionItem);
@@ -13115,12 +13271,13 @@
       Vue.component('f7-view', f7View);
       Vue.component('f7-views', f7Views);
 
-      // Define protos
+      // DEFINE_INSTANCE_PROTOS_START
       Object.defineProperty(Extend.prototype, '$f7', {
         get: function get() {
           return f7.instance;
         },
       });
+      // DEFINE_INSTANCE_PROTOS_END
 
       var theme = params.theme;
       if (theme === 'md') { f7Theme.md = true; }
@@ -13136,6 +13293,8 @@
         f7Theme.md = f7.instance.theme === 'md';
         f7Theme.aurora = f7.instance.theme === 'aurora';
       });
+
+      // DEFINE_PROTOS_START
       Object.defineProperty(Extend.prototype, '$theme', {
         get: function get() {
           return {
@@ -13145,7 +13304,6 @@
           };
         },
       });
-
 
       Extend.prototype.Dom7 = Framework7.$;
       Extend.prototype.$$ = Framework7.$;
@@ -13211,6 +13369,7 @@
           self._f7router = value;
         },
       });
+      // DEFINE_PROTOS_END
 
       // Extend F7 Router
       Framework7.Router.use(componentsRouter);
@@ -13219,4 +13378,4 @@
 
   return Plugin;
 
-}));
+})));

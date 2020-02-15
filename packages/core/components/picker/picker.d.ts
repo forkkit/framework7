@@ -121,10 +121,14 @@ export namespace Picker {
     sheetPush?: boolean
     /** Enables ability to close Picker sheet with swipe (default false) */
     sheetSwipeToClose?: boolean | undefined
+    /** Enables backdrop (dark semi transparent layer behind). (default undefined - based on Popover or Sheet defaults) */
+    backdrop?: boolean
     /** String with CSS selector or HTMLElement with related input element. */
     inputEl?: HTMLElement | CSSSelector
     /** Scroll viewport (page-content) to input when picker opened. (default true) */
     scrollToInput?: boolean
+    /** Scroll to a different element than the inputEl when picker opened. */
+    scrollToEl?: HTMLElement | CSSSelector
     /** Sets "readonly" attribute on specified input. (default true) */
     inputReadOnly?: boolean
     /** Additional CSS class name to be set on picker element. */
